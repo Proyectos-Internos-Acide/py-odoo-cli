@@ -8,6 +8,7 @@ class Config:
     ODOO_DB = os.getenv('ODOO_DB')
     ODOO_USER = os.getenv('ODOO_USER')
     ODOO_PASSWORD = os.getenv('ODOO_PASSWORD')
+    ODOO_VERIFY_SSL = os.getenv('ODOO_VERIFY_SSL', 'False').lower() == 'true'
 
     @classmethod
     def validate(cls) -> None:
