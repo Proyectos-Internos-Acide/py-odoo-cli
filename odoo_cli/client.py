@@ -1,5 +1,6 @@
 import xmlrpc.client
 import ssl
+import logging
 from typing import Any, List, Dict, Optional, Union
 from .config import Config
 
@@ -11,6 +12,7 @@ class OdooClient:
         self.username = Config.ODOO_USER
         self.password = Config.ODOO_PASSWORD
         self.uid = None
+        self.logger = logging.getLogger(__name__)
         
         # Create SSL context based on configuration
         if Config.ODOO_VERIFY_SSL:
@@ -24,9 +26,12 @@ class OdooClient:
             common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common', context=self.context)
             self.uid = int(common.authenticate(self.db, self.username, self.password, {}))
             if not self.uid:
+                self.logger.error("Authentication failed for user: %s", self.username)
                 raise PermissionError("Authentication failed. Check your credentials.")
+            self.logger.info("Successfully authenticated as user ID: %s", self.uid)
             return self.uid
         except Exception as e:
+            self.logger.exception("Connection error")
             raise ConnectionError(f"Could not connect to Odoo: {e}")
 
     def execute(self, model: str, method: str, *args, **kwargs) -> Any:
@@ -36,14 +41,17 @@ class OdooClient:
             
         models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object', context=self.context)
         try:
+            self.logger.debug("Executing %s on model %s with args: %s kwargs: %s", method, model, args, kwargs)
             return models.execute_kw(
                 self.db, self.uid, self.password,
                 model, method,
                 args, kwargs
             )
         except xmlrpc.client.Fault as e:
+            self.logger.error("Odoo Fault: %s", e)
             raise RuntimeError(f"Odoo Fault: {e}")
         except Exception as e:
+            self.logger.error("Execution error: %s", e)
             raise RuntimeError(f"Execution error: {e}")
 
     def search_read(self, model: str, domain: Optional[List[Any]] = None, fields: Optional[List[str]] = None, limit: Optional[int] = None, offset: int = 0, order: Optional[str] = None) -> List[Dict[str, Any]]:
