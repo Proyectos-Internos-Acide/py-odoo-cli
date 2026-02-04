@@ -1,5 +1,6 @@
 import xmlrpc.client
 import ssl
+from typing import Any, List, Dict, Optional, Union
 from .config import Config
 
 class OdooClient:
@@ -14,18 +15,18 @@ class OdooClient:
         # Create unverified context to avoid SSL errors with self-signed certs or old servers
         self.context = ssl._create_unverified_context()
 
-    def connect(self):
+    def connect(self) -> int:
         """Authenticate with Odoo and retrieve UID."""
         try:
             common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common', context=self.context)
-            self.uid = common.authenticate(self.db, self.username, self.password, {})
+            self.uid = int(common.authenticate(self.db, self.username, self.password, {}))
             if not self.uid:
                 raise PermissionError("Authentication failed. Check your credentials.")
             return self.uid
         except Exception as e:
             raise ConnectionError(f"Could not connect to Odoo: {e}")
 
-    def execute(self, model, method, *args, **kwargs):
+    def execute(self, model: str, method: str, *args, **kwargs) -> Any:
         """Execute a method on an Odoo model."""
         if not self.uid:
             self.connect()
@@ -42,10 +43,10 @@ class OdooClient:
         except Exception as e:
             raise RuntimeError(f"Execution error: {e}")
 
-    def search_read(self, model, domain=None, fields=None, limit=None, offset=0, order=None):
+    def search_read(self, model: str, domain: Optional[List[Any]] = None, fields: Optional[List[str]] = None, limit: Optional[int] = None, offset: int = 0, order: Optional[str] = None) -> List[Dict[str, Any]]:
         """Helper for search_read method."""
         domain = domain or []
-        kwargs = {}
+        kwargs: Dict[str, Any] = {}
         if fields: kwargs['fields'] = fields
         if limit: kwargs['limit'] = limit
         if offset: kwargs['offset'] = offset
@@ -53,14 +54,14 @@ class OdooClient:
         
         return self.execute(model, 'search_read', domain, **kwargs)
 
-    def create(self, model, vals):
+    def create(self, model: str, vals: Dict[str, Any]) -> int:
         """Helper to create a record."""
-        return self.execute(model, 'create', [vals])
+        return int(self.execute(model, 'create', [vals]))
 
-    def write(self, model, ids, vals):
+    def write(self, model: str, ids: List[int], vals: Dict[str, Any]) -> bool:
         """Helper to update records."""
-        return self.execute(model, 'write', [ids, vals])
+        return bool(self.execute(model, 'write', [ids, vals]))
 
-    def unlink(self, model, ids):
+    def unlink(self, model: str, ids: List[int]) -> bool:
         """Helper to delete records."""
-        return self.execute(model, 'unlink', [ids])
+        return bool(self.execute(model, 'unlink', [ids]))

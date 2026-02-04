@@ -10,7 +10,7 @@ class Config:
     ODOO_PASSWORD = os.getenv('ODOO_PASSWORD')
 
     @classmethod
-    def validate(cls):
+    def validate(cls) -> None:
         missing = []
         if not cls.ODOO_URL: missing.append('ODOO_URL')
         if not cls.ODOO_DB: missing.append('ODOO_DB')
