@@ -1,8 +1,14 @@
 import xmlrpc.client
 import ssl
 import logging
-from typing import Any, List, Dict, Optional, Union
+from typing import Any, List, Dict, Optional
+
 from .config import Config
+from .exceptions import (
+    OdooConnectionError,
+    OdooExecutionError,
+    OdooFaultError,
+)
 
 class OdooClient:
     def __init__(self):
@@ -23,36 +29,49 @@ class OdooClient:
     def connect(self) -> int:
         """Authenticate with Odoo and retrieve UID."""
         try:
-            common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common', context=self.context)
+            common = xmlrpc.client.ServerProxy(
+                f"{self.url}/xmlrpc/2/common", context=self.context
+            )
             self.uid = int(common.authenticate(self.db, self.username, self.password, {}))
             if not self.uid:
                 self.logger.error("Authentication failed for user: %s", self.username)
-                raise PermissionError("Authentication failed. Check your credentials.")
+                raise OdooConnectionError("Authentication failed. Check your credentials.")
             self.logger.info("Successfully authenticated as user ID: %s", self.uid)
             return self.uid
+        except OdooConnectionError:
+            raise
         except Exception as e:
             self.logger.exception("Connection error")
-            raise ConnectionError(f"Could not connect to Odoo: {e}")
+            raise OdooConnectionError(f"Could not connect to Odoo: {e}") from e
 
     def execute(self, model: str, method: str, *args, **kwargs) -> Any:
         """Execute a method on an Odoo model."""
         if not self.uid:
             self.connect()
             
-        models = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object', context=self.context)
+        models = xmlrpc.client.ServerProxy(
+            f"{self.url}/xmlrpc/2/object", context=self.context
+        )
         try:
-            self.logger.debug("Executing %s on model %s with args: %s kwargs: %s", method, model, args, kwargs)
+            self.logger.debug(
+                "Executing %s on model %s with args: %s kwargs: %s",
+                method, model, args, kwargs,
+            )
             return models.execute_kw(
                 self.db, self.uid, self.password,
                 model, method,
-                args, kwargs
+                args, kwargs,
             )
         except xmlrpc.client.Fault as e:
             self.logger.error("Odoo Fault: %s", e)
-            raise RuntimeError(f"Odoo Fault: {e}")
+            raise OdooFaultError(
+                f"Odoo Fault: {e.faultString}",
+                fault_code=getattr(e, "faultCode", None),
+                fault_string=getattr(e, "faultString", str(e)),
+            ) from e
         except Exception as e:
             self.logger.error("Execution error: %s", e)
-            raise RuntimeError(f"Execution error: {e}")
+            raise OdooExecutionError(f"Execution error: {e}") from e
 
     def search_read(self, model: str, domain: Optional[List[Any]] = None, fields: Optional[List[str]] = None, limit: Optional[int] = None, offset: int = 0, order: Optional[str] = None) -> List[Dict[str, Any]]:
         """Helper for search_read method."""
