@@ -293,3 +293,43 @@ curl -o imgs/lots-setting.png "https://www.odoo.com/documentation/saas-18.4/_ima
 De esta forma tendrás la documentación de **lotes** alineada con Odoo saas‑18.4 y las imágenes disponibles en local.
 
 
+![Reporte de trazabilidad de lotes y números de serie](https://www.odoo.com/documentation/15.0/_images/lots-traceability-report.png)
+
+---
+
+## Referencia de imágenes
+
+Todas las imágenes apuntan al sitio oficial de Odoo.  
+Si quieres descargarlas para trabajarlas en local (por ejemplo en `knowledge/docs/batches-and-serial-numbers/imgs/`), puedes usar esta tabla como referencia:
+
+| Descripción                                                                 | URL (Odoo)                                                                                 | Nombre sugerido local                       |
+|----------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|---------------------------------------------|
+| Ajuste activado: números de serie y lote en Inventario                     | `https://www.odoo.com/documentation/15.0/_images/lots-enabled-lots-setting.png`           | `lots-enabled-lots-setting.png`             |
+| Formulario de producto con seguimiento por lotes                           | `https://www.odoo.com/documentation/15.0/_images/lots-tracking-product-form.png`          | `lots-tracking-product-form.png`            |
+| Nuevo número de lote creado para producto en existencias                   | `https://www.odoo.com/documentation/15.0/_images/lots-new-lot-number.png`                 | `lots-new-lot-number.png`                   |
+| Error de usuario: falta asignar lote/número de serie en recepción          | `https://www.odoo.com/documentation/15.0/_images/lots-user-error-popup.png`               | `lots-user-error-popup.png`                 |
+| Asignación manual de lotes en operaciones detalladas                       | `https://www.odoo.com/documentation/15.0/_images/lots-assign-lot-number-popup.png`        | `lots-assign-lot-number-popup.png`          |
+| Ejemplo de hoja de cálculo con números de lote                             | `https://www.odoo.com/documentation/15.0/_images/lots-excel-spreadsheet.png`              | `lots-excel-spreadsheet.png`                |
+| Ventana de operaciones detalladas para órdenes de entrega con lotes        | `https://www.odoo.com/documentation/15.0/_images/lots-detailed-operations-popup.png`      | `lots-detailed-operations-popup.png`        |
+| Ajustes de tipos de operación para gestión de lotes                        | `https://www.odoo.com/documentation/15.0/_images/lots-operations-type-form.png`           | `lots-operations-type-form.png`             |
+| Reporte de trazabilidad de lotes y números de serie                        | `https://www.odoo.com/documentation/15.0/_images/lots-traceability-report.png`            | `lots-traceability-report.png`              |
+
+Ejemplo de descarga desde la raíz del proyecto:
+
+```bash
+cd knowledge/docs/batches-and-serial-numbers
+mkdir -p imgs
+curl -o imgs/lots-enabled-lots-setting.png "https://www.odoo.com/documentation/15.0/_images/lots-enabled-lots-setting.png"
+curl -o imgs/lots-tracking-product-form.png "https://www.odoo.com/documentation/15.0/_images/lots-tracking-product-form.png"
+curl -o imgs/lots-new-lot-number.png "https://www.odoo.com/documentation/15.0/_images/lots-new-lot-number.png"
+curl -o imgs/lots-user-error-popup.png "https://www.odoo.com/documentation/15.0/_images/lots-user-error-popup.png"
+curl -o imgs/lots-assign-lot-number-popup.png "https://www.odoo.com/documentation/15.0/_images/lots-assign-lot-number-popup.png"
+curl -o imgs/lots-excel-spreadsheet.png "https://www.odoo.com/documentation/15.0/_images/lots-excel-spreadsheet.png"
+curl -o imgs/lots-detailed-operations-popup.png "https://www.odoo.com/documentation/15.0/_images/lots-detailed-operations-popup.png"
+curl -o imgs/lots-operations-type-form.png "https://www.odoo.com/documentation/15.0/_images/lots-operations-type-form.png"
+curl -o imgs/lots-traceability-report.png "https://www.odoo.com/documentation/15.0/_images/lots-traceability-report.png"
+```
+
+Si guardas las imágenes en `imgs/`, puedes referenciarlas en este mismo archivo con rutas relativas, por ejemplo: `![Lotes en recepción](imgs/lots-user-error-popup.png)`.
+
+
