@@ -90,8 +90,8 @@ class OdooClient:
 
     def write(self, model: str, ids: List[int], vals: Dict[str, Any]) -> bool:
         """Helper to update records."""
-        return bool(self.execute(model, 'write', [ids, vals]))
+        return bool(self.execute(model, 'write', ids, vals))
 
     def unlink(self, model: str, ids: List[int]) -> bool:
         """Helper to delete records."""
-        return bool(self.execute(model, 'unlink', [ids]))
+        return bool(self.execute(model, 'unlink', ids))
