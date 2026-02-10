@@ -11,7 +11,7 @@ Busca y muestra información cruda de clientes basada en su nombre. Útil para v
 **⚠️ PELIGRO**
 Script de un solo uso para eliminar (o archivar) al partner 'Jessica Huaman Arias'.
 
-### `create_jessica_huaman.py`
+### `create_client.py`
 Crea (o actualiza) al cliente 'HUAMAN ARIAS JESSICA' con los datos correctos de SUNAT:
 - RUC: 10425620687
 - Tipo Doc: RUC (Código 6)

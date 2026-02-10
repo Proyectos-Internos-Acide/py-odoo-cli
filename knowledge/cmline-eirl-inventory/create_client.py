@@ -26,7 +26,7 @@ def main():
         
         identity_types = client.search_read(
             'l10n_latam.identification.type', 
-            [['code', '=', '6']], 
+            [['l10n_pe_vat_code', '=', '6']], 
             ['id', 'name']
         )
         
