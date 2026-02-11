@@ -63,6 +63,62 @@ ODOO_PASSWORD=tu-api-key
 
 ---
 
+## Instalación con Docker
+
+**Sin necesidad de instalar Python localmente**
+
+**1. Clonar el repositorio**
+
+```bash
+git clone https://github.com/your-user/py-odoo-cli.git
+cd py-odoo-cli
+```
+
+**2. Configurar entorno**
+
+Copia `.env.example` a `.env` y ajusta credenciales:
+
+```bash
+cp .env.example .env
+```
+
+**3. Construir la imagen**
+
+```bash
+docker-compose build
+```
+
+**4. Usar el CLI**
+
+```bash
+# Probar conexión
+docker-compose run --rm odoo-cli test-connection
+
+# Listar registros
+docker-compose run --rm odoo-cli list res.partner --limit 5 --fields name,email
+
+# Listar módulos instalados
+docker-compose run --rm odoo-cli list-modules
+
+# Listar parámetros del sistema
+docker-compose run --rm odoo-cli list-config
+```
+
+**Nota:** El flag `--rm` elimina el contenedor después de ejecutar el comando. La carpeta `knowledge/` está montada como volumen para persistir datos y scripts.
+
+**Alternativa con Docker directamente:**
+
+```bash
+# Construir imagen
+docker build -t py-odoo-cli .
+
+# Ejecutar comandos
+docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli test-connection
+docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli list res.partner --limit 5
+```
+
+---
+
 ## Uso
 
 ### Como biblioteca

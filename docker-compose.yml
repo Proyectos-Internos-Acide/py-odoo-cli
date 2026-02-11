@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  odoo-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: py-odoo-cli
+    volumes:
+      # Montar el .env para configuración
+      - ./.env:/app/.env:ro
+      # Montar knowledge para persistir datos y scripts
+      - ./knowledge:/app/knowledge
+      # Montar el código para desarrollo (opcional, comentar en producción)
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Comando por defecto: mostrar ayuda
+    command: ["--help"]
+    # Para usar comandos específicos, sobrescribir con:
+    # docker-compose run odoo-cli test-connection
+    # docker-compose run odoo-cli list res.partner --limit 5
