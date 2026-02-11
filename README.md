@@ -117,6 +117,20 @@ docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli t
 docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli list res.partner --limit 5
 ```
 
+**Ejecutar scripts de la carpeta `knowledge/`:**
+
+La carpeta `knowledge/` contiene scripts y casos de uso específicos. Puedes ejecutarlos con Docker usando el script helper:
+
+```bash
+# Usando el script helper
+./run-knowledge.sh knowledge/hotel-trip-agency/setup_timezone.py
+
+# O directamente con docker-compose
+docker-compose run --rm odoo-cli python knowledge/hotel-trip-agency/setup_timezone.py
+```
+
+Los datos y scripts en `knowledge/` se persisten como volumen, permitiendo "alimentar el cerebro" con información y casos de uso específicos que se mantienen entre ejecuciones.
+
 ---
 
 ## Uso

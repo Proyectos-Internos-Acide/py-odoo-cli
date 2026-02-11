@@ -27,6 +27,20 @@ knowledge/
 ### hotel-trip-agency
 Scripts y herramientas para gestión de timezones en instancias de Odoo relacionadas con hoteles y agencias de viajes.
 
+## Ejecutar Scripts con Docker
+
+Los scripts de `knowledge/` pueden ejecutarse directamente con Docker sin necesidad de instalar Python localmente:
+
+```bash
+# Usando el script helper (recomendado)
+./run-knowledge.sh knowledge/hotel-trip-agency/setup_timezone.py
+
+# O directamente con docker-compose
+docker-compose run --rm odoo-cli python knowledge/hotel-trip-agency/setup_timezone.py
+```
+
+La carpeta `knowledge/` está montada como volumen en Docker, por lo que todos los datos, scripts y documentación se persisten y están disponibles en cada ejecución.
+
 ## Agregar un Nuevo Proyecto
 
 1. Crea una nueva carpeta dentro de `knowledge/` con un nombre descriptivo
@@ -41,6 +55,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 from odoo_cli import OdooClient
 ```
+
+**Nota:** Si usas Docker, los scripts pueden importar directamente sin necesidad de ajustar `sys.path`, ya que el código está en el contenedor.
 
 ## Notas
 
