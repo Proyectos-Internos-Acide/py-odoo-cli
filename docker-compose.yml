@@ -11,8 +11,8 @@ services:
       - ./.env:/app/.env:ro
       # Montar knowledge para persistir datos y scripts
       - ./knowledge:/app/knowledge
-      # Montar el código para desarrollo (opcional, comentar en producción)
-      - .:/app
+      # Montar el código para desarrollo (descomentar solo si necesitas editar código en vivo)
+      # - .:/app
     environment:
       - PYTHONUNBUFFERED=1
     # Comando por defecto: mostrar ayuda
