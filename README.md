@@ -234,6 +234,12 @@ except OdooFaultError as e:
 
 ---
 
+## Origen del proyecto
+
+Este proyecto nació de la necesidad de interactuar con Odoo sin depender de su interfaz visual para configurar módulos y realizar operaciones administrativas. La idea original y el desarrollo inicial fueron realizados por [Roger Infa](https://github.com/rogerinfas) como parte de su trabajo en una organización privada, buscando una forma más eficiente y programática de gestionar instancias de Odoo mediante XML-RPC.
+
+---
+
 <div align="center">
 
 *py-odoo-cli — Servicio del CLI.*
