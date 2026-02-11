@@ -15,6 +15,8 @@
 
 Biblioteca reutilizable que centraliza la interacción con Odoo usando variables de entorno (`.env`) y una API mínima y predecible.
 
+**Diseñado para trabajar con editores de IA**: Configura tu `.env`, abre el proyecto en tu editor de IA (Cursor, etc.), y pídele que cree scripts específicos para tu proyecto. La IA crea scripts en `knowledge/<tu-proyecto>/` que puedes ejecutar inmediatamente con Docker.
+
 ---
 
 ## Características
@@ -25,6 +27,8 @@ Biblioteca reutilizable que centraliza la interacción con Odoo usando variables
 | **Configurable** | Credenciales y opciones vía `.env`. |
 | **API sencilla** | Wrappers para `search_read`, `create`, `write`, `unlink`. |
 | **CLI incluido** | Punto de entrada `main.py` para pruebas y tareas rápidas. |
+| **Dockerizado** | Ejecuta sin instalar Python localmente. |
+| **IA-friendly** | Diseñado para que editores de IA creen scripts en `knowledge/`. |
 
 ---
 
@@ -60,6 +64,87 @@ ODOO_DB=tu-base-de-datos
 ODOO_USER=email@ejemplo.com
 ODOO_PASSWORD=tu-api-key
 ```
+
+---
+
+## Instalación con Docker
+
+**Sin necesidad de instalar Python localmente**
+
+**1. Clonar el repositorio**
+
+```bash
+git clone https://github.com/your-user/py-odoo-cli.git
+cd py-odoo-cli
+```
+
+**2. Configurar entorno**
+
+Copia `.env.example` a `.env` y ajusta credenciales:
+
+```bash
+cp .env.example .env
+```
+
+**3. Construir la imagen**
+
+```bash
+docker-compose build
+```
+
+**4. Usar el CLI**
+
+```bash
+# Probar conexión
+docker-compose run --rm odoo-cli test-connection
+
+# Listar registros
+docker-compose run --rm odoo-cli list res.partner --limit 5 --fields name,email
+
+# Listar módulos instalados
+docker-compose run --rm odoo-cli list-modules
+
+# Listar parámetros del sistema
+docker-compose run --rm odoo-cli list-config
+```
+
+**Nota:** El flag `--rm` elimina el contenedor después de ejecutar el comando. La carpeta `knowledge/` está montada como volumen para persistir datos y scripts.
+
+**Alternativa con Docker directamente:**
+
+```bash
+# Construir imagen
+docker build -t py-odoo-cli .
+
+# Ejecutar comandos
+docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli test-connection
+docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli list res.partner --limit 5
+```
+
+**Ejecutar scripts de la carpeta `knowledge/`:**
+
+La carpeta `knowledge/` contiene scripts y casos de uso específicos. Puedes ejecutarlos con Docker:
+
+```bash
+# Usando el script helper
+./run-knowledge.sh knowledge/hotel-trip-agency/setup_timezone.py
+
+# O directamente con docker-compose
+docker-compose run --rm odoo-cli python knowledge/hotel-trip-agency/setup_timezone.py
+```
+
+**Flujo de trabajo con IA:**
+
+1. Configura tu `.env` con credenciales de Odoo
+2. Abre el proyecto en tu editor de IA (Cursor, etc.)
+3. Pide a la IA que cree scripts para tu proyecto: *"Crea un script para sincronizar productos desde mi ERP"*
+4. La IA crea `knowledge/<tu-proyecto>/` con los scripts
+5. Ejecuta inmediatamente con Docker (sin reconstruir la imagen):
+   ```bash
+   docker-compose run --rm odoo-cli python knowledge/mi-proyecto/mi_script.py
+   ```
+
+Los datos y scripts en `knowledge/` se persisten como volumen, permitiendo "alimentar el cerebro" con información y casos de uso específicos que se mantienen entre ejecuciones. Ver [knowledge/README.md](knowledge/README.md) para más detalles.
 
 ---
 
@@ -146,6 +231,12 @@ except OdooConnectionError:
 except OdooFaultError as e:
     print(f"Error de Odoo: {e.fault_string} (código: {e.fault_code})")
 ```
+
+---
+
+## Origen del proyecto
+
+Este proyecto nació de la necesidad de interactuar con Odoo sin depender de su interfaz visual para configurar módulos y realizar operaciones administrativas. La idea original y el desarrollo inicial fueron realizados por [Roger Infa](https://github.com/rogerinfas) como parte de su trabajo en una organización privada, buscando una forma más eficiente y programática de gestionar instancias de Odoo mediante XML-RPC.
 
 ---
 
