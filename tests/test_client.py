@@ -19,6 +19,7 @@ def _mock_config():
         "ODOO_USER": "user",
         "ODOO_PASSWORD": "pass",
         "ODOO_VERIFY_SSL": False,
+        "ODOO_TIMEOUT": 60,
     }
 
 
@@ -26,12 +27,8 @@ class TestOdooClient(unittest.TestCase):
     @patch("odoo_cli.client.Config")
     @patch("xmlrpc.client.ServerProxy")
     def test_connect(self, mock_server, mock_config):
-        mock_config.ODOO_URL = "http://test"
-        mock_config.ODOO_DB = "db"
-        mock_config.ODOO_USER = "user"
-        mock_config.ODOO_PASSWORD = "pass"
-        mock_config.ODOO_VERIFY_SSL = False
-
+        for k, v in _mock_config().items():
+            setattr(mock_config, k, v)
         mock_common = MagicMock()
         mock_common.authenticate.return_value = 1
         mock_server.return_value = mock_common
