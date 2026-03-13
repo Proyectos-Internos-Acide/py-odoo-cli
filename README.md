@@ -53,11 +53,15 @@ git clone https://github.com/your-user/py-odoo-cli.git
 cd py-odoo-cli
 ```
 
-**2. Instalar [UV](https://docs.astral.sh/uv/) y dependencias**
+**2. Crear y activar un entorno virtual**
+
+Requiere Python 3.11 o superior.
 
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv sync
+python -m venv .venv
+source .venv/bin/activate  # En Windows: .venv\Scripts\activate
+pip install --upgrade pip
+pip install -e .
 ```
 
 **3. Configurar entorno**
@@ -81,84 +85,23 @@ Opcionales: `ODOO_VERIFY_SSL` (true/false), `ODOO_TIMEOUT` (segundos, por defect
 
 ---
 
-## Instalación con Docker
+---
 
-**Sin necesidad de instalar Python localmente**
+## Flujo de trabajo con IA (entorno virtual)
 
-**1. Clonar el repositorio**
+La carpeta `knowledge/` contiene scripts y casos de uso específicos. El flujo recomendado es:
 
-```bash
-git clone https://github.com/your-user/py-odoo-cli.git
-cd py-odoo-cli
-```
+1. Configura tu `.env` con credenciales de Odoo.
+2. Abre el proyecto en tu editor de IA (Cursor, etc.).
+3. Pide a la IA que cree scripts para tu proyecto en `knowledge/<tu-proyecto>/`, por ejemplo: `"Crea un script para sincronizar productos desde mi ERP"`.
+4. Ejecuta los scripts desde tu entorno virtual ya activado:
 
-**2. Configurar entorno**
-
-Copia `.env.example` a `.env` y ajusta credenciales:
-
-```bash
-cp .env.example .env
-```
-
-**3. Construir la imagen**
-
-```bash
-docker-compose build
-```
-
-**4. Usar el CLI**
-
-```bash
-# Probar conexión
-docker-compose run --rm odoo-cli test-connection
-
-# Listar registros
-docker-compose run --rm odoo-cli list res.partner --limit 5 --fields name,email
-
-# Listar módulos instalados
-docker-compose run --rm odoo-cli list-modules
-
-# Listar parámetros del sistema
-docker-compose run --rm odoo-cli list-config
-```
-
-**Nota:** El flag `--rm` elimina el contenedor después de ejecutar el comando. La carpeta `knowledge/` está montada como volumen para persistir datos y scripts.
-
-**Alternativa con Docker directamente:**
-
-```bash
-# Construir imagen
-docker build -t py-odoo-cli .
-
-# Ejecutar comandos
-docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli test-connection
-docker run --rm --env-file .env -v $(pwd)/knowledge:/app/knowledge py-odoo-cli list res.partner --limit 5
-```
-
-**Ejecutar scripts de la carpeta `knowledge/`:**
-
-La carpeta `knowledge/` contiene scripts y casos de uso específicos. Puedes ejecutarlos con Docker:
-
-```bash
-# Usando el script helper
-./run-knowledge.sh knowledge/hotel-trip-agency/setup_timezone.py
-
-# O directamente con docker-compose
-docker-compose run --rm odoo-cli python knowledge/hotel-trip-agency/setup_timezone.py
-```
-
-**Flujo de trabajo con IA:**
-
-1. Configura tu `.env` con credenciales de Odoo
-2. Abre el proyecto en tu editor de IA (Cursor, etc.)
-3. Pide a la IA que cree scripts para tu proyecto: *"Crea un script para sincronizar productos desde mi ERP"*
-4. La IA crea `knowledge/<tu-proyecto>/` con los scripts
-5. Ejecuta inmediatamente con Docker (sin reconstruir la imagen):
    ```bash
-   docker-compose run --rm odoo-cli python knowledge/mi-proyecto/mi_script.py
+   python knowledge/hotel-trip-agency/setup_timezone.py
+   python knowledge/mi-proyecto/mi_script.py
    ```
 
-Los datos y scripts en `knowledge/` se persisten como volumen, permitiendo "alimentar el cerebro" con información y casos de uso específicos que se mantienen entre ejecuciones. Ver [knowledge/README.md](knowledge/README.md) para más detalles.
+Los datos y scripts en `knowledge/` viven dentro del repositorio, lo que permite "alimentar el cerebro" del proyecto con información y casos de uso específicos que se mantienen entre ejecuciones. Ver [knowledge/README.md](knowledge/README.md) para más detalles.
 
 ---
 
@@ -183,19 +126,19 @@ for p in partners:
 
 ### Desde la CLI
 
-Tras `uv sync` puedes usar `uv run python main.py <comando>` o, si instalas el paquete, el binario `odoo-cli`.
+Tras crear y activar el entorno virtual e instalar las dependencias (`pip install -e .`), puedes usar `python main.py <comando>` o, si instalas el paquete, el binario `odoo-cli`.
 
 | Acción              | Comando |
 |---------------------|---------|
-| Probar conexión     | `uv run python main.py test-connection` |
-| Listar registros    | `uv run python main.py list res.partner --limit 5 --fields name,email` |
-| Listar con dominio  | `uv run python main.py list res.partner --domain '[["is_company","=",true]]'` |
-| Salida JSON o CSV   | `uv run python main.py list res.partner --output json` |
-| Módulos instalados  | `uv run python main.py list-modules` |
-| Parámetros sistema  | `uv run python main.py list-config` |
-| Crear registro      | `uv run python main.py create res.partner --data '{"name":"Nuevo"}'` |
-| Actualizar registro | `uv run python main.py write res.partner 1 --data '{"email":"a@b.com"}'` |
-| Eliminar registro   | `uv run python main.py unlink res.partner 1,2,3` |
+| Probar conexión     | `python main.py test-connection` |
+| Listar registros    | `python main.py list res.partner --limit 5 --fields name,email` |
+| Listar con dominio  | `python main.py list res.partner --domain '[["is_company","=",true]]'` |
+| Salida JSON o CSV   | `python main.py list res.partner --output json` |
+| Módulos instalados  | `python main.py list-modules` |
+| Parámetros sistema  | `python main.py list-config` |
+| Crear registro      | `python main.py create res.partner --data '{"name":"Nuevo"}'` |
+| Actualizar registro | `python main.py write res.partner 1 --data '{"email":"a@b.com"}'` |
+| Eliminar registro   | `python main.py unlink res.partner 1,2,3` |
 
 ---
 
@@ -225,10 +168,10 @@ Más detalles en [knowledge/README.md](knowledge/README.md).
 
 ## Tests
 
-Tests con unittest (requiere dependencias instaladas, p. ej. `uv sync`):
+Tests con unittest (requiere dependencias instaladas en tu entorno virtual):
 
 ```bash
-uv run python -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
 ```
 
 En cada push y pull request se ejecutan los tests en CI (GitHub Actions) para Python 3.11, 3.12 y 3.13.

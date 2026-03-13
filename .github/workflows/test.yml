@@ -14,17 +14,16 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
       - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
       - name: Install dependencies
-        run: uv sync
+        run: pip install -e .
 
       - name: Run tests
-        run: uv run python -m unittest discover -s tests -v
+        run: python -m unittest discover -s tests -v
