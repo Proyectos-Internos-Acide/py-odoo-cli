@@ -22,24 +22,27 @@ knowledge/
     └── *.md                   # Documentación adicional
 ```
 
-## Proyectos Actuales
+## Proyectos actuales
 
-### hotel-trip-agency
-Scripts y herramientas para gestión de timezones en instancias de Odoo relacionadas con hoteles y agencias de viajes.
+Algunos proyectos incluidos en esta carpeta:
 
-## Ejecutar Scripts con Docker
+- `hotel-trip-agency`: gestión de timezones en instancias de Odoo relacionadas con hoteles y agencias de viajes.
+- `cmline-eirl-inventory` y `cmline-production`: inventario y unidades de medida para CM Line.
+- `machu-picchu-exclusive-tours`: actividades y configuración para un proyecto de tours en Machu Picchu.
+- `peru-flores-tours-test`: pruebas y automatización para un sitio web de turismo.
+- `production-inventory`: flujos completos de compra y venta con lotes y ubicaciones.
+- `test-crm`: configuración y datos de ejemplo para flujos CRM.
+- `tohalino`: facturación electrónica y flujos relacionados con SUNAT.
 
-Los scripts de `knowledge/` pueden ejecutarse directamente con Docker sin necesidad de instalar Python localmente:
+## Ejecutar scripts con entorno virtual
+
+Los scripts de `knowledge/` se ejecutan desde tu entorno virtual de Python ya activado:
 
 ```bash
-# Usando el script helper (recomendado)
-./run-knowledge.sh knowledge/hotel-trip-agency/setup_timezone.py
-
-# O directamente con docker-compose
-docker-compose run --rm odoo-cli python knowledge/hotel-trip-agency/setup_timezone.py
+python knowledge/hotel-trip-agency/setup_timezone.py
+python knowledge/machu-picchu-exclusive-tours/generar_actividades_turismo.py
+python knowledge/tohalino/electronic-invoicing/create_test_invoice.py
 ```
-
-La carpeta `knowledge/` está montada como volumen en Docker, por lo que todos los datos, scripts y documentación se persisten y están disponibles en cada ejecución.
 
 ## Flujo de Trabajo con IA
 
@@ -52,9 +55,9 @@ Este proyecto está diseñado para trabajar con editores de IA (como Cursor):
    - "Necesito un script que actualice los precios de productos"
    - "Crea un script para migrar datos de clientes"
 4. **La IA crea una carpeta** en `knowledge/<nombre-proyecto>/` con los scripts
-5. **Ejecuta con Docker** sin necesidad de instalar Python:
+5. **Ejecuta los scripts** desde tu entorno virtual:
    ```bash
-   docker-compose run --rm odoo-cli python knowledge/mi-proyecto/mi_script.py
+   python knowledge/mi-proyecto/mi_script.py
    ```
 
 ## Agregar un Nuevo Proyecto
@@ -72,7 +75,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 from odoo_cli import OdooClient
 ```
 
-**Nota:** Con Docker, los scripts funcionan inmediatamente porque el código está montado en el contenedor. No necesitas reconstruir la imagen cuando creas nuevos scripts.
+**Nota:** Mientras tu entorno virtual esté activado y el paquete esté instalado en modo editable (`pip install -e .`), los scripts pueden importar `odoo_cli` directamente sin pasos adicionales.
 
 ## Notas
 
