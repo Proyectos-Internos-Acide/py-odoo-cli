@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+odoo_cli/__init__.py
+odoo_cli/client.py
+odoo_cli/config.py
+odoo_cli/exceptions.py
+py_odoo_cli.egg-info/PKG-INFO
+py_odoo_cli.egg-info/SOURCES.txt
+py_odoo_cli.egg-info/dependency_links.txt
+py_odoo_cli.egg-info/entry_points.txt
+py_odoo_cli.egg-info/requires.txt
+py_odoo_cli.egg-info/top_level.txt
+tests/test_client.py
+tests/test_config.py
