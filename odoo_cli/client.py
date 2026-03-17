@@ -71,6 +71,7 @@ class OdooClient:
             self._common_proxy = xmlrpc.client.ServerProxy(
                 f"{self._base_url}/xmlrpc/2/common",
                 transport=self._transport,
+                allow_none=True,
             )
         return self._common_proxy
 
@@ -79,6 +80,7 @@ class OdooClient:
             self._object_proxy = xmlrpc.client.ServerProxy(
                 f"{self._base_url}/xmlrpc/2/object",
                 transport=self._transport,
+                allow_none=True,
             )
         return self._object_proxy
 
