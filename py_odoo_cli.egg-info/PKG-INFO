@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: py-odoo-cli
-Version: 0.1.0
-Summary: Cliente Python CLI para Odoo vía XML-RPC. Ejecuta comandos y scripts sin interfaz visual. Dockerizado y optimizado para flujo de trabajo con IA.
-Requires-Python: >=3.11
-Requires-Dist: python-dotenv>=1.2.1
-Requires-Dist: typer>=0.21.1
