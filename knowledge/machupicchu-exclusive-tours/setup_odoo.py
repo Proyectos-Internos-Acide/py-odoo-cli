@@ -162,7 +162,7 @@ def main():
         
         attach_id = client.search_read('ir.attachment', [('res_model', '=', 'product.template'), ('res_id', '=', prod_id), ('name', '=', 'Programa Camino Inca.pdf')], fields=['id'])
         if not attach_id:
-            client.create('ir.attachment', {
+            new_attach = client.create('ir.attachment', {
                 'name': 'Programa Camino Inca.pdf',
                 'res_model': 'product.template',
                 'res_id': prod_id,
@@ -170,8 +170,19 @@ def main():
                 'datas': b64_prog
             })
             print("✅ Programa adjuntado al producto.")
+            
+            # Buscamos el product.document que Odoo crea y le seteamos attached_on_sale
+            docs = client.search_read('product.document', [('ir_attachment_id', '=', new_attach)], fields=['id'])
+            if docs:
+                client.write('product.document', [docs[0]['id']], {'attached_on_sale': 'quotation'})
+                print("✅ Configurado para adjuntarse automáticamente en cotizaciones.")
         else:
             print("✅ Programa ya estaba adjunto al producto.")
+            # Aseguramos de actualizarlo también si ya estaba
+            docs = client.search_read('product.document', [('ir_attachment_id', '=', attach_id[0]['id'])], fields=['id'])
+            if docs:
+                client.write('product.document', [docs[0]['id']], {'attached_on_sale': 'quotation'})
+                print("✅ Configurado para adjuntarse automáticamente en cotizaciones.")
     else:
         print("⚠️ No se encontró el archivo del Programa PDF")
 
