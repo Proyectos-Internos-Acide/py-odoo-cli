@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """
-Crea o actualiza el tour:
-- Camino Inca 2 días – Grupo Compartido
+Script único para crear el tour Camino Inca 2 días con precios FIJOS por variante.
 
-Configuración:
-- Categoría: Camino Inca
-- Tipo: Service
-- Ventas: ON
-- Compras: OFF
-- Sin impuestos
-- Tarifas configurables por variante:
-  - Adulto: 670 USD
-  - Estudiante: 620 USD
-  - Niño: 590 USD
+Acciones:
+- Elimina el tour previo (si existe).
+- Lo vuelve a crear desde cero.
+- Crea variantes: Adulto, Estudiante, Niño.
+- Aplica precios fijos por variante mediante pricelist (no depende del precio base).
 """
 
 from pathlib import Path
@@ -23,9 +17,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from odoo_cli import OdooClient
+from odoo_cli.exceptions import OdooFaultError
 
 
 PRODUCT_NAME = "Camino Inca 2 días – Grupo Compartido"
+PRICELIST_NAME = "Wayki Trek - Tarifas Fijas Tours (USD)"
 DESCRIPTION = (
     "Vive la esencia del legendario Camino Inca en una versión corta pero profundamente "
     "significativa. Esta aventura compartida te llevará por antiguos senderos entre selva "
@@ -35,7 +31,6 @@ DESCRIPTION = (
     "vez Machu Picchu como lo hicieron los antiguos peregrinos. Un recorrido ideal para quienes "
     "buscan historia, naturaleza y conexión, en compañía de otros aventureros."
 )
-
 PRICES = {
     "Adulto": 670.0,
     "Estudiante": 620.0,
@@ -78,88 +73,150 @@ def ensure_attribute_and_values(client: OdooClient) -> tuple[int, dict[str, int]
         else:
             value_ids[value_name] = client.create(
                 "product.attribute.value",
-                {
-                    "name": value_name,
-                    "attribute_id": attr_id,
-                },
+                {"name": value_name, "attribute_id": attr_id},
             )
     return attr_id, value_ids
 
 
-def ensure_product(client: OdooClient, categ_id: int) -> int:
-    product = client.search_read(
-        "product.template",
-        domain=[["name", "=", PRODUCT_NAME]],
+def get_or_create_pricelist(client: OdooClient) -> int:
+    pl = client.search_read(
+        "product.pricelist",
+        domain=[["name", "=", PRICELIST_NAME]],
         fields=["id"],
         limit=1,
     )
-    vals = {
-        "name": PRODUCT_NAME,
-        "categ_id": categ_id,
-        "type": "service",
-        "sale_ok": True,
-        "purchase_ok": False,
-        "taxes_id": [(6, 0, [])],
-        "supplier_taxes_id": [(6, 0, [])],
-        "description_sale": DESCRIPTION,
-        # Base = precio más bajo; los demás por price_extra.
-        "list_price": PRICES["Niño"],
-    }
-    if product:
-        tmpl_id = product[0]["id"]
-        client.write("product.template", [tmpl_id], vals)
-        return tmpl_id
-    return client.create("product.template", vals)
-
-
-def ensure_attribute_line(client: OdooClient, tmpl_id: int, attr_id: int, value_ids: dict[str, int]) -> None:
-    lines = client.search_read(
-        "product.template.attribute.line",
-        domain=[["product_tmpl_id", "=", tmpl_id], ["attribute_id", "=", attr_id]],
-        fields=["id", "value_ids"],
-        limit=1,
+    if pl:
+        return pl[0]["id"]
+    return client.create(
+        "product.pricelist",
+        {"name": PRICELIST_NAME, "currency_id": 1},
     )
-    target_ids = [value_ids["Adulto"], value_ids["Estudiante"], value_ids["Niño"]]
-    if lines:
-        client.write("product.template.attribute.line", [lines[0]["id"]], {"value_ids": [(6, 0, target_ids)]})
-    else:
+
+
+def delete_previous_tour(client: OdooClient, pricelist_id: int) -> None:
+    previous = client.search_read(
+        "product.template",
+        domain=[["name", "=", PRODUCT_NAME]],
+        fields=["id"],
+        limit=20,
+    )
+    if not previous:
+        print("ℹ️ No había tour previo para eliminar.")
+        return
+
+    previous_tmpl_ids = [p["id"] for p in previous]
+    previous_variants = client.search_read(
+        "product.product",
+        domain=[["product_tmpl_id", "in", previous_tmpl_ids]],
+        fields=["id"],
+        limit=200,
+    )
+    previous_variant_ids = [v["id"] for v in previous_variants]
+
+    if previous_variant_ids:
+        pl_items = client.search_read(
+            "product.pricelist.item",
+            domain=[["pricelist_id", "=", pricelist_id], ["product_id", "in", previous_variant_ids]],
+            fields=["id"],
+            limit=500,
+        )
+        if pl_items:
+            client.unlink("product.pricelist.item", [x["id"] for x in pl_items])
+
+    try:
+        client.unlink("product.template", previous_tmpl_ids)
+        print(f"✅ Tour previo eliminado: {len(previous_tmpl_ids)} plantilla(s).")
+    except OdooFaultError:
+        # Si hay referencias (ej. sale.order.line), Odoo no permite borrar.
+        # Fallback: archivar y renombrar para dejar libre el nombre del tour nuevo.
+        for tmpl_id in previous_tmpl_ids:
+            client.write(
+                "product.template",
+                [tmpl_id],
+                {
+                    "active": False,
+                    "name": f"{PRODUCT_NAME} [ARCHIVADO]",
+                },
+            )
+        print(
+            "⚠️ No se pudo eliminar por referencias históricas. "
+            "Se archivó/renombró el tour previo y se continuará con recreación."
+        )
+
+
+def create_new_tour(client: OdooClient, categ_id: int, attr_id: int, value_ids: dict[str, int]) -> int:
+    tmpl_id = client.create(
+        "product.template",
+        {
+            "name": PRODUCT_NAME,
+            "categ_id": categ_id,
+            "type": "service",
+            "sale_ok": True,
+            "purchase_ok": False,
+            "taxes_id": [(6, 0, [])],
+            "supplier_taxes_id": [(6, 0, [])],
+            "description_sale": DESCRIPTION,
+            "list_price": PRICES["Adulto"],
+        },
+    )
+    client.create(
+        "product.template.attribute.line",
+        {
+            "product_tmpl_id": tmpl_id,
+            "attribute_id": attr_id,
+            "value_ids": [(6, 0, [value_ids["Adulto"], value_ids["Estudiante"], value_ids["Niño"]])],
+        },
+    )
+    return tmpl_id
+
+
+def apply_fixed_prices(client: OdooClient, tmpl_id: int, pricelist_id: int) -> None:
+    variants = client.search_read(
+        "product.product",
+        domain=[["product_tmpl_id", "=", tmpl_id]],
+        fields=["id", "display_name"],
+        limit=20,
+    )
+    variant_map: dict[str, int] = {}
+    for v in variants:
+        dname = v.get("display_name", "")
+        for label in PRICES:
+            if f"({label})" in dname:
+                variant_map[label] = v["id"]
+
+    missing = [x for x in PRICES if x not in variant_map]
+    if missing:
+        raise RuntimeError(f"No se encontraron variantes esperadas: {missing}")
+
+    for label, price in PRICES.items():
         client.create(
-            "product.template.attribute.line",
+            "product.pricelist.item",
             {
-                "product_tmpl_id": tmpl_id,
-                "attribute_id": attr_id,
-                "value_ids": [(6, 0, target_ids)],
+                "pricelist_id": pricelist_id,
+                "applied_on": "0_product_variant",
+                "product_id": variant_map[label],
+                "compute_price": "fixed",
+                "fixed_price": price,
             },
         )
 
 
-def configure_variant_prices(client: OdooClient, tmpl_id: int, value_ids: dict[str, int]) -> None:
-    # Ajuste por valor de variante:
-    # Niño = base 590 => extra 0
-    # Estudiante = 620 => +30
-    # Adulto = 670 => +80
-    extras = {
-        value_ids["Niño"]: 0.0,
-        value_ids["Estudiante"]: PRICES["Estudiante"] - PRICES["Niño"],
-        value_ids["Adulto"]: PRICES["Adulto"] - PRICES["Niño"],
-    }
-
-    ptavs = client.search_read(
-        "product.template.attribute.value",
-        domain=[["product_tmpl_id", "=", tmpl_id]],
-        fields=["id", "product_attribute_value_id", "price_extra"],
-        limit=100,
-    )
-    for ptav in ptavs:
-        pav = ptav.get("product_attribute_value_id")
-        if not isinstance(pav, list) or not pav:
-            continue
-        pav_id = pav[0]
-        if pav_id in extras:
-            client.write("product.template.attribute.value", [ptav["id"]], {"price_extra": extras[pav_id]})
+def set_default_pricelist(client: OdooClient, pricelist_id: int) -> None:
+    companies = client.search_read("res.company", domain=[], fields=["id"], limit=20)
+    for comp in companies:
+        client.execute(
+            "ir.default",
+            "set",
+            "res.partner",
+            "property_product_pricelist",
+            pricelist_id,
+            False,
+            comp["id"],
+            False,
+        )
 
 
-def show_result(client: OdooClient, tmpl_id: int) -> None:
+def show_result(client: OdooClient, tmpl_id: int, pricelist_id: int) -> None:
     variants = client.search_read(
         "product.product",
         domain=[["product_tmpl_id", "=", tmpl_id]],
@@ -167,23 +224,39 @@ def show_result(client: OdooClient, tmpl_id: int) -> None:
         limit=20,
         order="id asc",
     )
-    print("\n✅ Tour listo. Variantes y precios finales:")
+    rules = client.search_read(
+        "product.pricelist.item",
+        domain=[["pricelist_id", "=", pricelist_id]],
+        fields=["id", "product_id", "fixed_price"],
+        limit=500,
+    )
+    print("\n✅ Tour recreado con precios fijos:")
     for v in variants:
-        print(f"- {v['display_name']} | USD {v['lst_price']}")
+        fixed = next(
+            (
+                r["fixed_price"]
+                for r in rules
+                if isinstance(r.get("product_id"), list) and r["product_id"][0] == v["id"]
+            ),
+            None,
+        )
+        print(f"- {v['display_name']} | lista={v['lst_price']} | fijo={fixed}")
 
 
 def main() -> None:
-    print("Creando/actualizando tour Camino Inca 2 días...")
+    print("Recreando tour Camino Inca 2 días con precios fijos...")
     client = OdooClient()
     uid = client.connect()
     print(f"✅ Conectado (uid={uid})")
 
     categ_id = ensure_category(client)
     attr_id, value_ids = ensure_attribute_and_values(client)
-    tmpl_id = ensure_product(client, categ_id)
-    ensure_attribute_line(client, tmpl_id, attr_id, value_ids)
-    configure_variant_prices(client, tmpl_id, value_ids)
-    show_result(client, tmpl_id)
+    pricelist_id = get_or_create_pricelist(client)
+    delete_previous_tour(client, pricelist_id)
+    tmpl_id = create_new_tour(client, categ_id, attr_id, value_ids)
+    apply_fixed_prices(client, tmpl_id, pricelist_id)
+    set_default_pricelist(client, pricelist_id)
+    show_result(client, tmpl_id, pricelist_id)
     print("\n🎉 Proceso completado.")
 
 
