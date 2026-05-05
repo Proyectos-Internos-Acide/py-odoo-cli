@@ -4,8 +4,8 @@ Configuración inicial (limpia) del tour Camino Inca 2 días.
 
 - Crea el producto si no existe.
 - Crea/asegura variantes Adulto, Estudiante, Niño.
-- Base del producto: Niño (590).
-- Precios por variante vía price_extra:
+- Base del producto: 0.
+- Precios por variante vía price_extra (monto total):
   - Adulto: 670
   - Estudiante: 620
   - Niño: 590
@@ -83,7 +83,7 @@ def create_or_update_product(client: OdooClient, categ_id: int) -> int:
         "taxes_id": [(6, 0, [])],
         "supplier_taxes_id": [(6, 0, [])],
         "description_sale": DESCRIPTION,
-        "list_price": PRICES["Niño"],
+        "list_price": 0.0,
     }
     if existing:
         tmpl_id = existing[0]["id"]
@@ -111,9 +111,9 @@ def ensure_attribute_line(client: OdooClient, tmpl_id: int, attr_id: int, value_
 
 def configure_price_extras(client: OdooClient, tmpl_id: int, value_ids: dict[str, int]) -> None:
     extras = {
-        value_ids["Niño"]: 0.0,
-        value_ids["Estudiante"]: PRICES["Estudiante"] - PRICES["Niño"],
-        value_ids["Adulto"]: PRICES["Adulto"] - PRICES["Niño"],
+        value_ids["Niño"]: PRICES["Niño"],
+        value_ids["Estudiante"]: PRICES["Estudiante"],
+        value_ids["Adulto"]: PRICES["Adulto"],
     }
     ptavs = client.search_read(
         "product.template.attribute.value",

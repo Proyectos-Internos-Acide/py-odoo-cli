@@ -86,7 +86,7 @@ def create_or_update_product(client: OdooClient, categ_id: int) -> int:
         "taxes_id": [(6, 0, [])],
         "supplier_taxes_id": [(6, 0, [])],
         "description_sale": DESCRIPTION,
-        "list_price": PRICES["Estudiante"],
+        "list_price": 0.0,
     }
     if existing:
         tmpl_id = existing[0]["id"]
@@ -114,8 +114,8 @@ def ensure_attribute_line(client: OdooClient, tmpl_id: int, attr_id: int, value_
 
 def configure_price_extras(client: OdooClient, tmpl_id: int, value_ids: dict[str, int]) -> None:
     extras = {
-        value_ids["Estudiante"]: 0.0,
-        value_ids["Adulto"]: PRICES["Adulto"] - PRICES["Estudiante"],
+        value_ids["Estudiante"]: PRICES["Estudiante"],
+        value_ids["Adulto"]: PRICES["Adulto"],
     }
     ptavs = client.search_read(
         "product.template.attribute.value",
