@@ -21,6 +21,7 @@ VIEW_NAMES = [
     "wtk.external_layout.top_header.custom",
     "wtk.sale.quote.compact.spacing",
     "wtk.sale.quote.clean.table.unique.descriptions",
+    "wtk.sale.quote.column.widths",
 ]
 
 
