@@ -20,6 +20,7 @@ VIEW_NAMES = [
     "wtk.sale.quote.header.custom",
     "wtk.external_layout.top_header.custom",
     "wtk.sale.quote.compact.spacing",
+    "wtk.sale.quote.clean.table.unique.descriptions",
 ]
 
 
