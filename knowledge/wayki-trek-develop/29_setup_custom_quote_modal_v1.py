@@ -454,6 +454,133 @@ if target_records:
         client.create("base.automation", automation_vals)
 
 
+def _upsert_wizard_cost_totals_automation(client: OdooClient, wizard_model: dict, service_line_model: dict) -> None:
+    # Recalcula costos en wizard al cambiar costos fijos/variables o líneas
+    wiz_action_name = "WTK - Recalcular costos wizard"
+    wiz_action_code = """
+target_records = records or record
+if target_records:
+    for wiz in target_records:
+        op_cost = sum((wiz.x_line_ids.mapped('x_service_line_ids').mapped('x_price_pax')))
+        fixed = wiz.x_fixed_cost or 0.0
+        variable = wiz.x_variable_cost or 0.0
+        wiz.write({
+            'x_operational_cost_pax': op_cost,
+            'x_total_cost': op_cost + fixed + variable,
+        })
+""".strip()
+
+    wiz_action_existing = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", wiz_action_name], ["model_id", "=", wizard_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    wiz_action_vals = {
+        "name": wiz_action_name,
+        "model_id": wizard_model["id"],
+        "state": "code",
+        "code": wiz_action_code,
+    }
+    if wiz_action_existing:
+        wiz_action_id = wiz_action_existing[0]["id"]
+        client.write("ir.actions.server", [wiz_action_id], wiz_action_vals)
+    else:
+        wiz_action_id = client.create("ir.actions.server", wiz_action_vals)
+
+    wiz_fields = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_MODEL], ["name", "in", ["x_fixed_cost", "x_variable_cost", "x_line_ids"]]],
+        fields=["id"],
+        limit=20,
+    )
+    wiz_field_ids = [r["id"] for r in wiz_fields]
+
+    wiz_auto_name = "WTK - Auto recalcular costos wizard"
+    wiz_auto_existing = client.search_read(
+        "base.automation",
+        domain=[["name", "=", wiz_auto_name], ["model_id", "=", wizard_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    wiz_auto_vals = {
+        "name": wiz_auto_name,
+        "model_id": wizard_model["id"],
+        "trigger": "on_change",
+        "active": True,
+        "on_change_field_ids": [(6, 0, wiz_field_ids)],
+        "action_server_ids": [(6, 0, [wiz_action_id])],
+    }
+    if wiz_auto_existing:
+        client.write("base.automation", [wiz_auto_existing[0]["id"]], wiz_auto_vals)
+    else:
+        client.create("base.automation", wiz_auto_vals)
+
+    # Recalcula wizard cuando cambia una línea de servicio (precio pax)
+    svc_action_name = "WTK - Recalcular costos wizard desde servicio"
+    svc_action_code = """
+target_records = records or record
+if target_records:
+    for svc in target_records:
+        line = svc.x_line_id
+        wiz = line.x_wizard_id if line else False
+        if wiz:
+            op_cost = sum((wiz.x_line_ids.mapped('x_service_line_ids').mapped('x_price_pax')))
+            fixed = wiz.x_fixed_cost or 0.0
+            variable = wiz.x_variable_cost or 0.0
+            wiz.write({
+                'x_operational_cost_pax': op_cost,
+                'x_total_cost': op_cost + fixed + variable,
+            })
+""".strip()
+
+    svc_action_existing = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", svc_action_name], ["model_id", "=", service_line_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    svc_action_vals = {
+        "name": svc_action_name,
+        "model_id": service_line_model["id"],
+        "state": "code",
+        "code": svc_action_code,
+    }
+    if svc_action_existing:
+        svc_action_id = svc_action_existing[0]["id"]
+        client.write("ir.actions.server", [svc_action_id], svc_action_vals)
+    else:
+        svc_action_id = client.create("ir.actions.server", svc_action_vals)
+
+    svc_fields = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_SERVICE_LINE_MODEL], ["name", "in", ["x_price_pax", "x_line_id"]]],
+        fields=["id"],
+        limit=20,
+    )
+    svc_field_ids = [r["id"] for r in svc_fields]
+
+    svc_auto_name = "WTK - Auto costos wizard desde servicio"
+    svc_auto_existing = client.search_read(
+        "base.automation",
+        domain=[["name", "=", svc_auto_name], ["model_id", "=", service_line_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    svc_auto_vals = {
+        "name": svc_auto_name,
+        "model_id": service_line_model["id"],
+        "trigger": "on_change",
+        "active": True,
+        "on_change_field_ids": [(6, 0, svc_field_ids)],
+        "action_server_ids": [(6, 0, [svc_action_id])],
+    }
+    if svc_auto_existing:
+        client.write("base.automation", [svc_auto_existing[0]["id"]], svc_auto_vals)
+    else:
+        client.create("base.automation", svc_auto_vals)
+
+
 def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -> int:
     arch_db = f"""
 <form string="Cotización personalizada" create="true" edit="true">
@@ -494,6 +621,13 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -
                     </group>
                 </form>
             </field>
+        </group>
+        <separator string="Resumen de costos"/>
+        <group col="2">
+            <field name="x_operational_cost_pax" string="Costo operativo por PAX (USD)" readonly="1"/>
+            <field name="x_fixed_cost" string="Costo fijo / gastos administrativos (USD)"/>
+            <field name="x_variable_cost" string="Costo variable / otros gastos (USD)"/>
+            <field name="x_total_cost" string="Total costos (USD)" readonly="1"/>
         </group>
     </sheet>
     <footer>
@@ -615,6 +749,10 @@ def main() -> None:
     wizard_service_line_model = _ensure_service_line_model(client)
     _ensure_field(client, wizard_model, "x_sale_order_id", "Cotización origen", "many2one", relation="sale.order")
     _ensure_field(client, wizard_model, "x_passenger_qty", "Cantidad de pasajeros", "integer")
+    _ensure_field(client, wizard_model, "x_operational_cost_pax", "Costo operativo por PAX", "float")
+    _ensure_field(client, wizard_model, "x_fixed_cost", "Costo fijo / gastos administrativos", "float")
+    _ensure_field(client, wizard_model, "x_variable_cost", "Costo variable / otros gastos", "float")
+    _ensure_field(client, wizard_model, "x_total_cost", "Total costos", "float")
 
     # Primero crear many2one del modelo línea, luego one2many del wizard.
     _ensure_field(client, wizard_line_model, "x_wizard_id", "Wizard", "many2one", relation=WIZ_MODEL)
@@ -675,6 +813,7 @@ def main() -> None:
     _upsert_report_action(client, wizard_model)
     _upsert_wizard_passenger_qty_sync(client, wizard_model)
     _upsert_service_price_pax_onchange(client, wizard_service_line_model)
+    _upsert_wizard_cost_totals_automation(client, wizard_model, wizard_service_line_model)
     print_action_id = _upsert_wizard_print_action(client, wizard_model, WIZ_REPORT_ACTION_NAME)
     wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id)
 
