@@ -464,9 +464,41 @@ if target_records:
         op_cost = sum((wiz.x_line_ids.mapped('x_service_line_ids').mapped('x_price_pax')))
         fixed = wiz.x_fixed_cost or 0.0
         variable = wiz.x_variable_cost or 0.0
+        total_cost = op_cost + fixed + variable
+
+        profit_pct_raw = wiz.x_profit_pct if wiz.x_profit_pct is not None else 20.0
+        profit_rate = (profit_pct_raw / 100.0) if profit_pct_raw > 1 else profit_pct_raw
+        profit_amount = total_cost * profit_rate
+        subtotal = total_cost + profit_amount
+
+        igv_pct_raw = wiz.x_igv_pct if wiz.x_igv_pct is not None else 18.0
+        renta_pct_raw = wiz.x_renta_pct if wiz.x_renta_pct is not None else 0.3
+        igv_rate = (igv_pct_raw / 100.0) if igv_pct_raw > 1 else igv_pct_raw
+        renta_rate = (renta_pct_raw / 100.0) if renta_pct_raw > 1 else renta_pct_raw
+
+        tax_rate = 0.0
+        if wiz.x_apply_igv:
+            tax_rate = igv_rate
+        elif wiz.x_apply_renta:
+            tax_rate = renta_rate
+
+        tax_amount = subtotal * tax_rate
+        subtotal_with_tax = subtotal + tax_amount
+
+        card_pct_raw = wiz.x_card_commission_pct if wiz.x_card_commission_pct is not None else 5.0
+        card_rate = (card_pct_raw / 100.0) if card_pct_raw > 1 else card_pct_raw
+        card_commission = subtotal_with_tax * card_rate
+        final_price = subtotal_with_tax + card_commission
+
         wiz.write({
             'x_operational_cost_pax': op_cost,
-            'x_total_cost': op_cost + fixed + variable,
+            'x_total_cost': total_cost,
+            'x_profit_amount': profit_amount,
+            'x_subtotal_amount': subtotal,
+            'x_tax_amount': tax_amount,
+            'x_subtotal_after_tax': subtotal_with_tax,
+            'x_card_commission_amount': card_commission,
+            'x_final_price': final_price,
         })
 """.strip()
 
@@ -490,9 +522,19 @@ if target_records:
 
     wiz_fields = client.search_read(
         "ir.model.fields",
-        domain=[["model", "=", WIZ_MODEL], ["name", "in", ["x_fixed_cost", "x_variable_cost", "x_line_ids"]]],
+        domain=[["model", "=", WIZ_MODEL], ["name", "in", [
+            "x_fixed_cost",
+            "x_variable_cost",
+            "x_line_ids",
+            "x_profit_pct",
+            "x_apply_igv",
+            "x_igv_pct",
+            "x_apply_renta",
+            "x_renta_pct",
+            "x_card_commission_pct",
+        ]]],
         fields=["id"],
-        limit=20,
+        limit=100,
     )
     wiz_field_ids = [r["id"] for r in wiz_fields]
 
@@ -528,9 +570,41 @@ if target_records:
             op_cost = sum((wiz.x_line_ids.mapped('x_service_line_ids').mapped('x_price_pax')))
             fixed = wiz.x_fixed_cost or 0.0
             variable = wiz.x_variable_cost or 0.0
+            total_cost = op_cost + fixed + variable
+
+            profit_pct_raw = wiz.x_profit_pct if wiz.x_profit_pct is not None else 20.0
+            profit_rate = (profit_pct_raw / 100.0) if profit_pct_raw > 1 else profit_pct_raw
+            profit_amount = total_cost * profit_rate
+            subtotal = total_cost + profit_amount
+
+            igv_pct_raw = wiz.x_igv_pct if wiz.x_igv_pct is not None else 18.0
+            renta_pct_raw = wiz.x_renta_pct if wiz.x_renta_pct is not None else 0.3
+            igv_rate = (igv_pct_raw / 100.0) if igv_pct_raw > 1 else igv_pct_raw
+            renta_rate = (renta_pct_raw / 100.0) if renta_pct_raw > 1 else renta_pct_raw
+
+            tax_rate = 0.0
+            if wiz.x_apply_igv:
+                tax_rate = igv_rate
+            elif wiz.x_apply_renta:
+                tax_rate = renta_rate
+
+            tax_amount = subtotal * tax_rate
+            subtotal_with_tax = subtotal + tax_amount
+
+            card_pct_raw = wiz.x_card_commission_pct if wiz.x_card_commission_pct is not None else 5.0
+            card_rate = (card_pct_raw / 100.0) if card_pct_raw > 1 else card_pct_raw
+            card_commission = subtotal_with_tax * card_rate
+            final_price = subtotal_with_tax + card_commission
+
             wiz.write({
                 'x_operational_cost_pax': op_cost,
-                'x_total_cost': op_cost + fixed + variable,
+                'x_total_cost': total_cost,
+                'x_profit_amount': profit_amount,
+                'x_subtotal_amount': subtotal,
+                'x_tax_amount': tax_amount,
+                'x_subtotal_after_tax': subtotal_with_tax,
+                'x_card_commission_amount': card_commission,
+                'x_final_price': final_price,
             })
 """.strip()
 
@@ -581,6 +655,104 @@ if target_records:
         client.create("base.automation", svc_auto_vals)
 
 
+def _upsert_tax_exclusive_automations(client: OdooClient, wizard_model: dict) -> None:
+    igv_action_name = "WTK - Exclusivo IGV"
+    igv_code = """
+target_records = records or record
+if target_records:
+    for wiz in target_records:
+        if wiz.x_apply_igv and wiz.x_apply_renta:
+            wiz.write({'x_apply_renta': False})
+""".strip()
+    igv_action = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", igv_action_name], ["model_id", "=", wizard_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    igv_vals = {"name": igv_action_name, "model_id": wizard_model["id"], "state": "code", "code": igv_code}
+    if igv_action:
+        igv_action_id = igv_action[0]["id"]
+        client.write("ir.actions.server", [igv_action_id], igv_vals)
+    else:
+        igv_action_id = client.create("ir.actions.server", igv_vals)
+
+    igv_field = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_MODEL], ["name", "=", "x_apply_igv"]],
+        fields=["id"],
+        limit=1,
+    )
+    if igv_field:
+        igv_auto_name = "WTK - Auto exclusivo IGV"
+        igv_auto = client.search_read(
+            "base.automation",
+            domain=[["name", "=", igv_auto_name], ["model_id", "=", wizard_model["id"]]],
+            fields=["id"],
+            limit=1,
+        )
+        igv_auto_vals = {
+            "name": igv_auto_name,
+            "model_id": wizard_model["id"],
+            "trigger": "on_change",
+            "active": True,
+            "on_change_field_ids": [(6, 0, [igv_field[0]["id"]])],
+            "action_server_ids": [(6, 0, [igv_action_id])],
+        }
+        if igv_auto:
+            client.write("base.automation", [igv_auto[0]["id"]], igv_auto_vals)
+        else:
+            client.create("base.automation", igv_auto_vals)
+
+    renta_action_name = "WTK - Exclusivo Renta"
+    renta_code = """
+target_records = records or record
+if target_records:
+    for wiz in target_records:
+        if wiz.x_apply_renta and wiz.x_apply_igv:
+            wiz.write({'x_apply_igv': False})
+""".strip()
+    renta_action = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", renta_action_name], ["model_id", "=", wizard_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    renta_vals = {"name": renta_action_name, "model_id": wizard_model["id"], "state": "code", "code": renta_code}
+    if renta_action:
+        renta_action_id = renta_action[0]["id"]
+        client.write("ir.actions.server", [renta_action_id], renta_vals)
+    else:
+        renta_action_id = client.create("ir.actions.server", renta_vals)
+
+    renta_field = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_MODEL], ["name", "=", "x_apply_renta"]],
+        fields=["id"],
+        limit=1,
+    )
+    if renta_field:
+        renta_auto_name = "WTK - Auto exclusivo Renta"
+        renta_auto = client.search_read(
+            "base.automation",
+            domain=[["name", "=", renta_auto_name], ["model_id", "=", wizard_model["id"]]],
+            fields=["id"],
+            limit=1,
+        )
+        renta_auto_vals = {
+            "name": renta_auto_name,
+            "model_id": wizard_model["id"],
+            "trigger": "on_change",
+            "active": True,
+            "on_change_field_ids": [(6, 0, [renta_field[0]["id"]])],
+            "action_server_ids": [(6, 0, [renta_action_id])],
+        }
+        if renta_auto:
+            client.write("base.automation", [renta_auto[0]["id"]], renta_auto_vals)
+        else:
+            client.create("base.automation", renta_auto_vals)
+
+
 def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -> int:
     arch_db = f"""
 <form string="Cotización personalizada" create="true" edit="true">
@@ -624,10 +796,51 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -
         </group>
         <separator string="Resumen de costos"/>
         <group col="2">
-            <field name="x_operational_cost_pax" string="Costo operativo por PAX (USD)" readonly="1"/>
-            <field name="x_fixed_cost" string="Costo fijo / gastos administrativos (USD)"/>
-            <field name="x_variable_cost" string="Costo variable / otros gastos (USD)"/>
-            <field name="x_total_cost" string="Total costos (USD)" readonly="1"/>
+            <group col="1">
+                <group col="2">
+                    <label for="x_operational_cost_pax" string="Costo operativo por PAX (USD)"/>
+                    <field name="x_operational_cost_pax" nolabel="1" readonly="1"/>
+                    <label for="x_fixed_cost" string="Costo fijo / gastos administrativos (USD)"/>
+                    <field name="x_fixed_cost" nolabel="1"/>
+                    <label for="x_variable_cost" string="Costo variable / otros gastos (USD)"/>
+                    <field name="x_variable_cost" nolabel="1"/>
+                    <label for="x_total_cost" string="Total costos (USD)"/>
+                    <field name="x_total_cost" nolabel="1" readonly="1"/>
+                </group>
+            </group>
+            <group col="1">
+                <group col="2">
+                    <label for="x_profit_pct" string="Utilidad (%)"/>
+                    <field name="x_profit_pct" nolabel="1"/>
+                    <label for="x_profit_amount" string="Utilidad (USD)"/>
+                    <field name="x_profit_amount" nolabel="1" readonly="1"/>
+                    <label for="x_subtotal_amount" string="Subtotal (USD)"/>
+                    <field name="x_subtotal_amount" nolabel="1" readonly="1"/>
+                </group>
+                <separator string="Impuesto (seleccionar uno)"/>
+                <group col="2">
+                    <label for="x_apply_igv" string="Aplicar IGV"/>
+                    <field name="x_apply_igv" nolabel="1"/>
+                    <label for="x_igv_pct" string="IGV (%)"/>
+                    <field name="x_igv_pct" nolabel="1"/>
+                    <label for="x_apply_renta" string="Aplicar Renta a la utilidad"/>
+                    <field name="x_apply_renta" nolabel="1"/>
+                    <label for="x_renta_pct" string="Renta (%)"/>
+                    <field name="x_renta_pct" nolabel="1"/>
+                </group>
+                <group col="2">
+                    <label for="x_tax_amount" string="Monto impuesto (USD)"/>
+                    <field name="x_tax_amount" nolabel="1" readonly="1"/>
+                    <label for="x_subtotal_after_tax" string="Subtotal acumulado (USD)"/>
+                    <field name="x_subtotal_after_tax" nolabel="1" readonly="1"/>
+                    <label for="x_card_commission_pct" string="Comisión por tarjetas (%)"/>
+                    <field name="x_card_commission_pct" nolabel="1"/>
+                    <label for="x_card_commission_amount" string="Comisión tarjetas (USD)"/>
+                    <field name="x_card_commission_amount" nolabel="1" readonly="1"/>
+                    <label for="x_final_price" string="Precio final (USD)"/>
+                    <field name="x_final_price" nolabel="1" readonly="1"/>
+                </group>
+            </group>
         </group>
     </sheet>
     <footer>
@@ -664,6 +877,12 @@ if records:
     ctx.update({{
         'default_x_sale_order_id': records[0].id,
         'default_x_passenger_qty': 1,
+        'default_x_profit_pct': 20.0,
+        'default_x_apply_igv': True,
+        'default_x_igv_pct': 18.0,
+        'default_x_apply_renta': False,
+        'default_x_renta_pct': 0.3,
+        'default_x_card_commission_pct': 5.0,
     }})
 
 action = {{
@@ -753,6 +972,18 @@ def main() -> None:
     _ensure_field(client, wizard_model, "x_fixed_cost", "Costo fijo / gastos administrativos", "float")
     _ensure_field(client, wizard_model, "x_variable_cost", "Costo variable / otros gastos", "float")
     _ensure_field(client, wizard_model, "x_total_cost", "Total costos", "float")
+    _ensure_field(client, wizard_model, "x_profit_pct", "Utilidad (%)", "float")
+    _ensure_field(client, wizard_model, "x_profit_amount", "Utilidad (USD)", "float")
+    _ensure_field(client, wizard_model, "x_subtotal_amount", "Subtotal (USD)", "float")
+    _ensure_field(client, wizard_model, "x_apply_igv", "Aplicar IGV", "boolean")
+    _ensure_field(client, wizard_model, "x_igv_pct", "IGV (%)", "float")
+    _ensure_field(client, wizard_model, "x_apply_renta", "Aplicar Renta", "boolean")
+    _ensure_field(client, wizard_model, "x_renta_pct", "Renta (%)", "float")
+    _ensure_field(client, wizard_model, "x_tax_amount", "Monto impuesto (USD)", "float")
+    _ensure_field(client, wizard_model, "x_subtotal_after_tax", "Subtotal acumulado (USD)", "float")
+    _ensure_field(client, wizard_model, "x_card_commission_pct", "Comisión tarjetas (%)", "float")
+    _ensure_field(client, wizard_model, "x_card_commission_amount", "Comisión tarjetas (USD)", "float")
+    _ensure_field(client, wizard_model, "x_final_price", "Precio final (USD)", "float")
 
     # Primero crear many2one del modelo línea, luego one2many del wizard.
     _ensure_field(client, wizard_line_model, "x_wizard_id", "Wizard", "many2one", relation=WIZ_MODEL)
@@ -814,6 +1045,7 @@ def main() -> None:
     _upsert_wizard_passenger_qty_sync(client, wizard_model)
     _upsert_service_price_pax_onchange(client, wizard_service_line_model)
     _upsert_wizard_cost_totals_automation(client, wizard_model, wizard_service_line_model)
+    _upsert_tax_exclusive_automations(client, wizard_model)
     print_action_id = _upsert_wizard_print_action(client, wizard_model, WIZ_REPORT_ACTION_NAME)
     wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id)
 
