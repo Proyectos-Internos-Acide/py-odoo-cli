@@ -9,7 +9,7 @@ from odoo_cli import OdooClient
 from constants import *
 from constants import _get_model
 
-def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -> int:
+def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, client_print_action_id: int) -> int:
     arch_db = f"""
 <form string="Cotización personalizada" create="true" edit="true">
     <sheet>
@@ -100,7 +100,12 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int) -
         </group>
     </sheet>
     <footer>
-        <button string="Generar PDF" type="action" name="{print_action_id}" class="btn-primary"/>
+        <button string="📊 PDF Interno" type="action" name="{print_action_id}"
+                class="btn-primary"
+                style="background-color:#20603D !important;border-color:#20603D !important;color:#ffffff !important;"/>
+        <button string="📄 PDF Cliente" type="action" name="{client_print_action_id}"
+                class="btn-secondary"
+                style="background-color:#ffffff !important;border:2px solid #20603D !important;color:#20603D !important;font-weight:700 !important;"/>
         <button string="Cerrar" special="cancel"/>
     </footer>
 </form>
@@ -210,9 +215,9 @@ def _upsert_sale_form_button_view(client: OdooClient, action_id: int) -> int:
         return vid
     return client.create("ir.ui.view", vals)
 
-def run(client: OdooClient, wizard_model: dict, print_action_id: int):
+def run(client: OdooClient, wizard_model: dict, print_action_id: int, client_print_action_id: int):
     print("-> Configurando vistas y botones...")
-    wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id)
+    wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id, client_print_action_id)
     sale_order_model = _get_model(client, "sale.order")
     sale_action_id = _upsert_sale_button_action(client, sale_order_model, wizard_model, wizard_view_id)
     sale_view_id = _upsert_sale_form_button_view(client, sale_action_id)
@@ -223,4 +228,5 @@ if __name__ == "__main__":
     client.connect()
     wizard_model = _get_model(client, WIZ_MODEL)
     print_action_id = client.search_read("ir.actions.server", [["name", "=", WIZ_PRINT_ACTION_NAME], ["model_id", "=", wizard_model["id"]]], fields=["id"], limit=1)[0]["id"]
-    run(client, wizard_model, print_action_id)
+    client_print_action_id = client.search_read("ir.actions.server", [["name", "=", WIZ_CLIENT_PRINT_ACTION_NAME], ["model_id", "=", wizard_model["id"]]], fields=["id"], limit=1)[0]["id"]
+    run(client, wizard_model, print_action_id, client_print_action_id)
