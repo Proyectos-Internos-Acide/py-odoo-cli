@@ -20,8 +20,8 @@ def main():
     
     wizard_model, wizard_line_model, wizard_service_line_model = run_models(client)
     run_logic(client, wizard_model, wizard_service_line_model)
-    print_action_id = run_reports(client, wizard_model)
-    run_views(client, wizard_model, print_action_id)
+    print_action_id, client_print_action_id = run_reports(client, wizard_model)
+    run_views(client, wizard_model, print_action_id, client_print_action_id)
     
     print("🎉 V3 Modular lista.")
 
