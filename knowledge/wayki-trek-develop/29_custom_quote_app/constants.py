@@ -12,6 +12,11 @@ WIZ_PRINT_ACTION_NAME = "WTK - Generar PDF desde wizard"
 BTN_ACTION_NAME = "WTK - Abrir modal cotización personalizada"
 BTN_VIEW_NAME = "wtk.sale.order.form.custom.quote.button"
 
+# Reporte cliente
+WIZ_CLIENT_REPORT_TEMPLATE_NAME = "wtk.report_custom_quote_client"
+WIZ_CLIENT_REPORT_ACTION_NAME = "WTK - PDF Cotización cliente"
+WIZ_CLIENT_PRINT_ACTION_NAME = "WTK - Generar PDF cliente desde wizard"
+
 def _get_model(client, model_name: str) -> dict:
     rec = client.search_read("ir.model", domain=[["model", "=", model_name]], fields=["id", "model", "name"], limit=1)
     return rec[0] if rec else {}
