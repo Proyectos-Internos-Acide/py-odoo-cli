@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from odoo_cli import OdooClient
 
 # CONFIGURACIÓN: Cambiar a False para producción (3 días)
-TEST_MODE = True
+TEST_MODE = False
 
 def get_model_id(client: OdooClient, model_name: str) -> int:
     rec = client.search_read("ir.model", [["model", "=", model_name]], ["id"], limit=1)
