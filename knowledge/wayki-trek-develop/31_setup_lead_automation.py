@@ -78,6 +78,14 @@ def setup_lead_automation(client: OdooClient):
     else:
         rule_id = client.create("base.automation", vals_automation)
         print(f"✅ Regla de automatización creada ({mode_desc}). ID: {rule_id}")
+
+    # Fijar prioridad=0 en el cron encargado de ejecutar las reglas de tiempo (ID 49).
+    # En Odoo SaaS, prioridad=0 es la máxima y garantiza que el cron no sea postergado.
+    # La prioridad vive en ir.cron, no en base.automation.
+    cron_automation_id = client.search_read("ir.cron", [["name", "=", "Automation Rules: check and execute"]], ["id"], limit=1)
+    if cron_automation_id:
+        client.write("ir.cron", [cron_automation_id[0]["id"]], {"priority": 0})
+        print(f"✅ Prioridad del cron de automatización fijada a 0 (máxima). ID: {cron_automation_id[0]['id']}")
         
     # 2. Crear o actualizar la acción del servidor vinculada (ir.actions.server)
     action_name = f"WTK - Mover Lead a Seguimiento"
