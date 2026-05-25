@@ -90,6 +90,7 @@ def run(client: OdooClient):
     wizard_line_model = _ensure_line_model(client)
     wizard_service_line_model = _ensure_service_line_model(client)
     _ensure_field(client, wizard_model, "x_sale_order_id", "Cotización origen", "many2one", relation="sale.order")
+    _ensure_field(client, wizard_model, "x_quote_name", "Nombre de la cotización", "char")
     _ensure_field(client, wizard_model, "x_passenger_qty", "Cantidad de pasajeros", "integer")
     _ensure_field(client, wizard_model, "x_operational_cost_pax", "Costo operativo por PAX", "float")
     _ensure_field(client, wizard_model, "x_fixed_cost", "Costo fijo / gastos administrativos", "float")

@@ -21,7 +21,10 @@ def _upsert_wizard_report_template(client: OdooClient) -> int:
                     <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
                         <tr>
                             <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff;">
-                                <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">Cotización personalizada</div>
+                                <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">
+                                    <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                    <span t-else="">Cotización personalizada</span>
+                                </div>
                                 <div style="font-size:10px; opacity:0.92; margin-top:4px;">Wayki Trek · Documento de referencia</div>
                             </td>
                         </tr>
@@ -334,7 +337,10 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                     <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
                         <tr>
                             <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff;">
-                                <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">Cotización personalizada</div>
+                                <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">
+                                    <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                    <span t-else="">Cotización personalizada</span>
+                                </div>
                                 <div style="font-size:10px; opacity:0.92; margin-top:4px;">Wayki Trek · Documento de referencia</div>
                             </td>
                         </tr>

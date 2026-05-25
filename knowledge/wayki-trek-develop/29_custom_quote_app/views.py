@@ -15,6 +15,7 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, c
     <sheet>
         <group col="2">
             <field name="x_sale_order_id" readonly="1"/>
+            <field name="x_quote_name" placeholder="Ej. Machu Picchu 8 días"/>
             <field name="x_passenger_qty"/>
         </group>
         <separator string="Productos para cotización custom"/>
