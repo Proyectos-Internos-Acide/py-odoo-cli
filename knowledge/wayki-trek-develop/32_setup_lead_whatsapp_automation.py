@@ -17,7 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from odoo_cli import OdooClient
 
 # CONFIGURACIÓN: Cambiar a False para producción (3 días)
-TEST_MODE = True
+TEST_MODE = False
 
 def get_model_id(client: OdooClient, model_name: str) -> int:
     rec = client.search_read("ir.model", [["model", "=", model_name]], ["id"], limit=1)
@@ -152,7 +152,7 @@ def setup_lead_whatsapp_automation(client: OdooClient):
         print(f"✅ Acción de servidor creada y vinculada. ID: {action_id}")
         
     print("\n🎉 Configuración completada con éxito.")
-    print("ℹ️ NOTA TÉCNICA: Esta regla se activa 1 minuto después de que el lead entre a la etapa 'Primer mensaje'")
+    print(f"ℹ️ NOTA TÉCNICA: Esta regla se activa en: {mode_desc} después de que el lead entre a la etapa 'Primer mensaje'")
     print("según el campo 'date_last_stage_update'.")
 
 def main():
