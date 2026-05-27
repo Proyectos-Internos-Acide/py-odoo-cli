@@ -1,50 +1,41 @@
 # Pipeline CRM Wayki Trek
 
-Este documento define las etapas del pipeline comercial en Odoo CRM, alineadas con el flujo operativo acordado para Wayki Trek.
+Este documento define las etapas del pipeline comercial en Odoo CRM, actualizadas según la configuración real en producción.
 
-## 1) Nuevo Lead (Captación Automática)
+## 1) Nuevo Lead (Captación Automática) [ID: 5]
+- **Descripción:** Entrada automática de todos los prospectos desde formularios web.
+- **Acción:** Mapeo de datos (tour, personas, nacionalidad).
 
-- **Descripción:** Aquí entran automáticamente todos los prospectos que completan el formulario en WordPress.
-- **Acción:** El sistema mapea datos como el tour de interés, número de personas y nacionalidad.
+## 2) Primer mensaje [ID: 11]
+- **Descripción:** Se ha enviado el primer mensaje automático o manual al cliente por WhatsApp.
+- **Acción:** Esperar la respuesta inicial del cliente.
 
-## 2) Negociación / Cotización
+## 3) Seguimiento [ID: 12]
+- **Descripción:** Lead que requiere insistencia. (La automatización traslada aquí a los leads de "Primer mensaje" si no responden en 3 días).
+- **Acción:** Retomar contacto o descartar si no hay interés.
 
-- **Descripción:** En esta etapa, el equipo de ventas interviene manualmente para verificar la disponibilidad (especialmente para Camino Inca y Machu Picchu).
-- **Acción:** Se envían propuestas comerciales usando plantillas de cotización en PDF de Odoo. Si no hay respuesta en 3 días, se activa el seguimiento de recordatorio.
+## 4) Negociación / Cotización [ID: 6]
+- **Descripción:** Interacción activa, se envían itinerarios y cotizaciones.
+- **Acción:** Aclarar dudas y cerrar el servicio.
 
-## 3) Validación Interna (Vistos Buenos)
+## 5) Confirmado / Pago de Saldo [ID: 9]
+- **Descripción:** El viaje está reservado, pendiente del pago final antes de la salida.
+- **Acción:** Seguimiento administrativo para asegurar el cobro.
 
-- **Descripción:** Etapa crítica donde se coordinan las áreas internas antes de formalizar el viaje.
-- **Sub-pasos necesarios:**
-  - **Operaciones:** Da el visto bueno sobre la viabilidad técnica del tour.
-  - **Contabilidad:** Confirma la recepción del depósito inicial del 50%.
-
-## 4) Reserva en Ejecución
-
-- **Descripción:** Una vez obtenidos los vistos buenos, el área de Reservas procede a la compra de permisos, ingresos y espacios logísticos.
-- **Acción:** Se comunica oficialmente al cliente que su espacio está asegurado.
-
-## 5) Confirmado / Pago de Saldo
-
-- **Descripción:** Oportunidades donde el servicio ya está reservado, pero se espera el 50% restante del pago (entre 15 y 8 días antes del viaje).
-- **Acción:** Seguimiento administrativo para asegurar el cierre financiero antes de la salida.
-
-## 6) Ganado / Post-Venta
-
-- **Descripción:** El servicio se ha ejecutado con éxito.
-- **Acción:** Se solicita feedback y se invita al cliente a dejar su testimonio en TripAdvisor.
+## 6) Convertido en Cliente / Post-Venta [ID: 10] (Ganado)
+- **Descripción:** Cliente con servicio completado o cerrado exitosamente.
+- **Acción:** Seguimiento post-tour, solicitud de reseñas (TripAdvisor).
 
 ---
 
-## Orden recomendado en Odoo
+## Orden actual en Odoo
 
 1. Nuevo Lead (Captación Automática)
-2. Negociación / Cotización
-3. Validación Interna (Vistos Buenos)
-4. Reserva en Ejecución
+2. Primer mensaje
+3. Seguimiento
+4. Negociación / Cotización
 5. Confirmado / Pago de Saldo
-6. Ganado / Post-Venta
+6. Convertido en Cliente / Post-Venta
 
 ## Nota de configuración
-
-- Marcar **Ganado / Post-Venta** como etapa ganada (`is_won = true`) en Odoo CRM.
+- La etapa **Convertido en Cliente / Post-Venta** es la única marcada como ganada (`is_won = true`).
