@@ -66,37 +66,37 @@ def main():
 
     # 1. Bienvenida
     t1_body = (
-        "Hola {{1}} 👋, somos el equipo de Wayki Trek. Hemos recibido tu interés por nuestro tour {{2}}. "
-        "Para verificar disponibilidad, ¿en qué fechas tenías planeado viajar?"
+        "¡Hola {{1}}! 👋 Somos el equipo de Wayki Trek 🏔️. Hemos recibido tu interés por nuestro tour {{2}}. "
+        "Para verificar disponibilidad y organizar la mejor experiencia, ¿en qué fechas tenías planeado viajar? 📅"
     )
     create_template(client, "wtk_bienvenida_lead", crm_model_id, t1_body, wa_account_id)
 
     # 2. Seguimiento (3 días)
     t2_body = (
-        "Hola {{1}}, hace unos días te enviamos información. Como los espacios para {{2}} se agotan rápido "
-        "por regulaciones del gobierno, queríamos saber si pudiste revisar la propuesta o si tienes alguna duda "
-        "en la que podamos ayudarte."
+        "¡Hola {{1}}! ⏳ Hace unos días te enviamos información. Como los espacios para {{2}} se agotan rápido "
+        "por regulaciones del gobierno 🏛️, queríamos saber si pudiste revisar la propuesta o si tienes alguna duda "
+        "en la que podamos ayudarte 🎒."
     )
     create_template(client, "wtk_seguimiento_3dias", crm_model_id, t2_body, wa_account_id)
 
     # 3. Cotización (con PDF)
     t3_body = (
-        "Hola {{1}}, adjunto encontrarás el itinerario detallado y la cotización oficial para tu viaje. "
-        "Si todo está conforme, avísanos para enviarte el link del depósito inicial."
+        "¡Hola {{1}}! ✨ Adjunto encontrarás el itinerario detallado 📄 y la cotización oficial para tu viaje. "
+        "Si todo está conforme, avísanos para enviarte el link del depósito inicial y asegurar tus espacios 🎫."
     )
-    create_template(client, "wtk_envio_cotizacion", crm_model_id, t3_body, wa_account_id, header_type="document")
+    create_template(client, "wtk_envio_cotizacion", crm_model_id, t3_body, wa_account_id, header_type="none")
 
     # 4. Cobro de Saldo
     t4_body = (
         "¡Tu aventura está muy cerca, {{1}}! 🏔️ Recuerda que para asegurar la logística final, "
-        "el saldo de tu reserva debe ser cancelado. Puedes realizar el pago de forma segura aquí: {{2}}"
+        "el saldo de tu reserva debe ser cancelado 💳. Puedes realizar el pago de forma segura aquí: {{2}} 🔒"
     )
     create_template(client, "wtk_recordatorio_saldo", crm_model_id, t4_body, wa_account_id)
 
     # 5. Post-Venta
     t5_body = (
-        "Hola {{1}}, ha sido un honor acompañarte en esta aventura. Si disfrutaste la experiencia con nuestro equipo, "
-        "nos ayudaría muchísimo si compartes tu opinión en TripAdvisor: {{2}}. ¡Gracias por confiar en Wayki Trek!"
+        "¡Hola {{1}}! 🌟 Ha sido un honor acompañarte en esta aventura. Si disfrutaste la experiencia con nuestro equipo, "
+        "nos ayudaría muchísimo si compartes tu opinión en TripAdvisor 📝: {{2}}. ¡Gracias por confiar en Wayki Trek! 🙏"
     )
     create_template(client, "wtk_post_tour_review", crm_model_id, t5_body, wa_account_id)
 
