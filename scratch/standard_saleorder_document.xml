@@ -42,14 +42,11 @@
                 </div>
                 <div t-if="doc.date_order" class="col" name="informations_date">
                     <strong t-if="is_proforma">Issued Date</strong>
-                    <strong t-elif="doc.state in ['draft', 'sent']">Quotation Date</strong>
-                    <strong t-else="">Order Date</strong>
+                    <strong t-elif="doc.state in ['draft', 'sent']">Fecha de Servicio</strong>
+                    <strong t-else="">Fecha de Servicio</strong>
                     <div t-field="doc.date_order" t-options="{&quot;widget&quot;: &quot;date&quot;}">2023-12-31</div>
                 </div>
-                <div t-if="doc.validity_date and doc.state in ['draft', 'sent']" class="col" name="expiration_date">
-                    <strong>Expiration</strong>
-                    <div t-field="doc.validity_date">2023-12-31</div>
-                </div>
+
                 <div t-if="doc.incoterm" class="col">
                     <strong>Incoterm</strong>
                     <div t-if="doc.incoterm_location">
@@ -68,6 +65,22 @@
                     <strong>Contact</strong>
                     <div t-field="doc.user_id">Mitchell Admin</div>
                 </div>
+            </div>
+
+            <!-- Product and variant summary -->
+            <div id="product_variant_summary" style="margin-bottom: 18px; padding: 10px 14px; background: #ecfdf5; border-left: 3px solid #20603D;">
+                <t t-foreach="doc.order_line" t-as="pline">
+                    <t t-if="not pline.display_type and pline.product_id">
+                        <div style="margin-bottom: 8px;">
+                            <span style="color: #20603D; font-weight: bold; font-size: 12px;">Producto: </span><span style="font-weight: bold; font-size: 12px;" t-field="pline.product_id.product_tmpl_id.name"/>
+                            <t t-foreach="pline.product_id.product_template_attribute_value_ids" t-as="av">
+                                <div style="font-size: 11px; color: #374151; margin-left: 12px; margin-top: 2px;">
+                                    <span t-field="av.attribute_id.name"/>: <span t-field="av.name"/>
+                                </div>
+                            </t>
+                        </div>
+                    </t>
+                </t>
             </div>
 
             <!-- Is there a discount on at least one line? -->
