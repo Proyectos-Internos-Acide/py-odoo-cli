@@ -16,21 +16,21 @@ from odoo_cli import OdooClient
 XML_PATH = os.path.join(os.path.dirname(__file__), 'standard_saleorder_document.xml')
 
 # Translations: what to replace per language.
-# Key: (source_text, translated_text)
+# Key: list of (source_text, translated_text) tuples applied to the base Spanish XML.
 LANG_TRANSLATIONS = {
-    'es_419': [],  # base — no replacements needed
+    'es_419': [],  # base — no replacements needed (already in Spanish)
     'es_ES': [],   # same as Spanish base
     'en_US': [
         ('Fecha de Servicio', 'Service Date'),
-        ('Producto: </span>', 'Product: </span>'),
+        ('>Cliente<', '>Client<'),
     ],
     'de_DE': [
         ('Fecha de Servicio', 'Servicedatum'),
-        ('Producto: </span>', 'Produkt: </span>'),
+        ('>Cliente<', '>Kunde<'),
     ],
     'pt_BR': [
         ('Fecha de Servicio', 'Data do Serviço'),
-        ('Producto: </span>', 'Produto: </span>'),
+        # 'Cliente' is the same in Portuguese
     ],
 }
 
@@ -54,22 +54,12 @@ def main():
     view_id = views[0]['id']
     print(f"Found view ID {view_id}: {views[0]['name']}")
 
-    for lang, replacements in LANG_TRANSLATIONS.items():
-        arch = base_arch
-        for src, dst in replacements:
-            arch = arch.replace(src, dst)
-
-        client.execute(
-            'ir.ui.view',
-            'write',
-            [view_id],
-            {'arch_db': arch},
-            context={'lang': lang}
-        )
-        print(f"  ✅ [{lang}] Updated ({len(replacements)} replacements applied)")
-
-    print("\n🎉 View updated for all languages successfully.")
+    # i18n is now handled directly in QWeb via Python dicts at render time.
+    # We only need to push one version — no per-language arch_db writes needed.
+    client.execute('ir.ui.view', 'write', [view_id], {'arch_db': base_arch})
+    print("✅ View updated successfully (i18n handled inline by QWeb).")
 
 
 if __name__ == "__main__":
     main()
+

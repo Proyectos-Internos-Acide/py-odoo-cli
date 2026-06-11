@@ -1,10 +1,19 @@
 <t t-name="sale.report_saleorder_document">
     <t t-set="address">
-        <div t-field="doc.partner_id" class="mb-0" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;], &quot;no_marker&quot;: True}"/>
-        <p t-if="doc.partner_id.vat" class="mb-0">
-            <t t-if="doc.company_id.account_fiscal_country_id.vat_label" t-out="doc.company_id.account_fiscal_country_id.vat_label"/>
-            <t t-else="">Tax ID</t>: <span t-field="doc.partner_id.vat"/>
-        </p>
+        <!-- i18n: resolve label from partner language at render time -->
+        <t t-set="_addr_lang" t-value="doc.partner_id.lang or 'en_US'"/>
+        <t t-set="_client_label" t-value="{'es_419': 'Cliente', 'es_ES': 'Cliente', 'pt_BR': 'Cliente', 'de_DE': 'Kunde'}.get(_addr_lang, 'Client')"/>
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 2px;">
+            <t t-out="_client_label"/>
+        </div>
+        <div style="font-weight: bold; font-size: 13px; color: #111827; line-height: 1.3;">
+            <span t-field="doc.partner_id.name"/>
+        </div>
+        <t t-if="doc.partner_id.phone">
+            <div style="font-size: 10px; color: #6b7280; margin-top: 2px;">
+                <span t-field="doc.partner_id.phone"/>
+            </div>
+        </t>
     </t>
     <t t-set="is_proforma" t-value="env.context.get('proforma', False) or is_pro_forma"/>
     <t t-set="layout_document_title">
@@ -14,6 +23,9 @@
         <span t-field="doc.name">SO0000</span>
     </t>
     <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+    <!-- i18n: global labels resolved from partner language -->
+    <t t-set="_lang" t-value="doc.partner_id.lang or 'en_US'"/>
+    <t t-set="_svc_date_label" t-value="{'es_419': 'Fecha de Servicio', 'es_ES': 'Fecha de Servicio', 'pt_BR': 'Data do Serviço', 'de_DE': 'Servicedatum'}.get(_lang, 'Service Date')"/>
     <t t-if="doc.partner_shipping_id == doc.partner_invoice_id                          and doc.partner_invoice_id != doc.partner_id                          or doc.partner_shipping_id != doc.partner_invoice_id">
         <t t-set="information_block">
             <strong>
@@ -42,8 +54,8 @@
                 </div>
                 <div t-if="doc.date_order" class="col" name="informations_date">
                     <strong t-if="is_proforma">Issued Date</strong>
-                    <strong t-elif="doc.state in ['draft', 'sent']">Fecha de Servicio</strong>
-                    <strong t-else="">Fecha de Servicio</strong>
+                    <strong t-elif="doc.state in ['draft', 'sent']"><t t-out="_svc_date_label"/></strong>
+                    <strong t-else=""><t t-out="_svc_date_label"/></strong>
                     <div t-field="doc.date_order" t-options="{&quot;widget&quot;: &quot;date&quot;}">2023-12-31</div>
                 </div>
 
@@ -67,16 +79,14 @@
                 </div>
             </div>
 
-            <!-- Product and variant summary -->
-            <div id="product_variant_summary" style="margin-bottom: 18px; padding: 10px 14px; background: #ecfdf5; border-left: 3px solid #20603D;">
+            <!-- Product and variant summary (minimalist) -->
+            <div id="product_variant_summary" style="margin-bottom: 14px; padding: 6px 12px; border-left: 2px solid #20603D;">
                 <t t-foreach="doc.order_line" t-as="pline">
                     <t t-if="not pline.display_type and pline.product_id">
-                        <div style="margin-bottom: 8px;">
-                            <span style="color: #20603D; font-weight: bold; font-size: 12px;">Producto: </span><span style="font-weight: bold; font-size: 12px;" t-field="pline.product_id.product_tmpl_id.name"/>
+                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
+                            <span style="font-size: 11px; font-weight: 700; color: #111827; margin-right: 4px;" t-field="pline.product_id.product_tmpl_id.name"/>
                             <t t-foreach="pline.product_id.product_template_attribute_value_ids" t-as="av">
-                                <div style="font-size: 11px; color: #374151; margin-left: 12px; margin-top: 2px;">
-                                    <span t-field="av.attribute_id.name"/>: <span t-field="av.name"/>
-                                </div>
+                                <span style="display: inline-block; font-size: 9px; background: #ecfdf5; color: #20603D; border: 1px solid #d1fae5; border-radius: 3px; padding: 1px 5px;"><span t-field="av.name"/></span>
                             </t>
                         </div>
                     </t>
