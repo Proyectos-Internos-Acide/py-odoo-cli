@@ -1,20 +1,4 @@
 <t t-name="sale.report_saleorder_document">
-    <t t-set="address">
-        <!-- i18n: resolve label from partner language at render time -->
-        <t t-set="_addr_lang" t-value="doc.partner_id.lang or 'en_US'"/>
-        <t t-set="_client_label" t-value="'Cliente' if (_addr_lang and _addr_lang.startswith('es')) else {'pt_BR': 'Cliente', 'de_DE': 'Kunde'}.get(_addr_lang, 'Client')"/>
-        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; margin-bottom: 2px;">
-            <t t-out="_client_label"/>
-        </div>
-        <div style="font-weight: bold; font-size: 13px; color: #111827; line-height: 1.3;">
-            <span t-field="doc.partner_id.name"/>
-        </div>
-        <t t-if="doc.partner_id.phone">
-            <div style="font-size: 10px; color: #6b7280; margin-top: 2px;">
-                <span t-field="doc.partner_id.phone"/>
-            </div>
-        </t>
-    </t>
     <t t-set="is_proforma" t-value="env.context.get('proforma', False) or is_pro_forma"/>
     <t t-set="layout_document_title">
         <span t-if="is_proforma">Pro Forma Invoice # </span>
@@ -43,11 +27,24 @@
             </t>
         </t>
     </t>
-    <t t-call="web.external_layout" address="address" layout_document_title="layout_document_title" information_block="information_block" forced_vat="doc.fiscal_position_id.foreign_vat"> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
+    <t t-call="web.external_layout" address="False" layout_document_title="layout_document_title" information_block="information_block" forced_vat="doc.fiscal_position_id.foreign_vat"> <!-- So that it appears in the footer of the report instead of the company VAT if it's set -->
         <div class="page">
             <div class="oe_structure"/>
 
             <div class="row mb-4" id="informations">
+                <div class="col" name="informations_partner">
+                    <t t-set="_addr_lang" t-value="doc.partner_id.lang or 'en_US'"/>
+                    <t t-set="_client_label" t-value="'Cliente' if (_addr_lang and _addr_lang.startswith('es')) else {'pt_BR': 'Cliente', 'de_DE': 'Kunde'}.get(_addr_lang, 'Client')"/>
+                    <strong t-attf-style="color: #{doc.company_id.secondary_color or '#E5B745'} !important;"><t t-out="_client_label"/></strong>
+                    <div>
+                        <span t-field="doc.partner_id.name"/>
+                    </div>
+                    <t t-if="doc.partner_id.phone">
+                        <div style="font-size: 10px; color: #6b7280; margin-top: 2px;">
+                            <span t-field="doc.partner_id.phone"/>
+                        </div>
+                    </t>
+                </div>
                 <div t-if="doc.client_order_ref" class="col" name="informations_reference">
                     <strong>Your Reference</strong>
                     <div t-field="doc.client_order_ref">SO0000</div>
