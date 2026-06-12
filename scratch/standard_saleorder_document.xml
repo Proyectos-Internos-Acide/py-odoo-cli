@@ -1,28 +1,61 @@
 <t t-name="sale.report_saleorder_document">
+    <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+    <t t-set="_lang" t-value="doc.partner_id.lang or 'en_US'"/>
+    
+    <t t-set="_is_es" t-value="_lang and _lang.startswith('es')"/>
+    <t t-set="_is_pt" t-value="_lang == 'pt_BR'"/>
+    <t t-set="_is_de" t-value="_lang == 'de_DE'"/>
+    
+    <t t-set="_client_label" t-value="'Cliente' if _is_es else ('Cliente' if _is_pt else ('Kunde' if _is_de else 'Client'))"/>
+    <t t-set="_svc_date_label" t-value="'Fecha de Servicio' if _is_es else ('Data do Serviço' if _is_pt else ('Servicedatum' if _is_de else 'Service Date'))"/>
+    <t t-set="_ref_label" t-value="'Su Referencia' if _is_es else ('Sua Referência' if _is_pt else ('Ihre Referenz' if _is_de else 'Your Reference'))"/>
+    <t t-set="_delivery_label" t-value="'Fecha de Entrega' if _is_es else ('Data de Entrega' if _is_pt else ('Lieferdatum' if _is_de else 'Delivery Date'))"/>
+    <t t-set="_contact_label" t-value="'Contacto' if _is_es else ('Contato' if _is_pt else ('Kontakt' if _is_de else 'Contact'))"/>
+    <t t-set="_issued_label" t-value="'Fecha de Emisión' if _is_es else ('Data de Emissão' if _is_pt else ('Ausstellungsdatum' if _is_de else 'Issued Date'))"/>
+    
+    <t t-set="_proforma_label" t-value="'Factura Proforma nº ' if _is_es else ('Fatura Pro Forma nº ' if _is_pt else ('Pro-Forma-Rechnung Nr. ' if _is_de else 'Pro Forma Invoice # '))"/>
+    <t t-set="_quotation_label" t-value="'Cotización nº ' if _is_es else ('Orçamento nº ' if _is_pt else ('Angebot Nr. ' if _is_de else 'Quotation # '))"/>
+    <t t-set="_order_label" t-value="'Pedido nº ' if _is_es else ('Pedido nº ' if _is_pt else ('Auftrag Nr. ' if _is_de else 'Order # '))"/>
+    
+    <t t-set="_desc_label" t-value="'Descripción' if _is_es else ('Descrição' if _is_pt else ('Beschreibung' if _is_de else 'Description'))"/>
+    <t t-set="_qty_label" t-value="'Cantidad' if _is_es else ('Quantidade' if _is_pt else ('Menge' if _is_de else 'Quantity'))"/>
+    <t t-set="_priceunit_label" t-value="'Precio Unitario' if _is_es else ('Preço Unitário' if _is_pt else ('Einzelpreis' if _is_de else 'Unit Price'))"/>
+    <t t-set="_discount_label" t-value="'Desc.%' if _is_es else ('Desc.%' if _is_pt else ('Rabatt %' if _is_de else 'Disc.%'))"/>
+    <t t-set="_taxes_label" t-value="'Impuestos' if _is_es else ('Impostos' if _is_pt else ('Steuern' if _is_de else 'Taxes'))"/>
+    <t t-set="_amount_label" t-value="'Importe' if _is_es else ('Valor' if _is_pt else ('Betrag' if _is_de else 'Amount'))"/>
+    
+    <t t-set="_inv_ship_label" t-value="'Dirección de Facturación y Envío' if _is_es else ('Endereço de Faturamento e Envio' if _is_pt else ('Rechnungs- und Lieferadresse' if _is_de else 'Invoicing and Shipping Address'))"/>
+    <t t-set="_inv_label" t-value="'Dirección de Facturación' if _is_es else ('Endereço de Faturamento' if _is_pt else ('Rechnungsadresse' if _is_de else 'Invoicing Address'))"/>
+    <t t-set="_ship_label" t-value="'Dirección de Envío' if _is_es else ('Endereço de Envio' if _is_pt else ('Lieferadresse' if _is_de else 'Shipping Address'))"/>
+    
+    <t t-set="_signature_label" t-value="'Firma' if _is_es else ('Assinatura' if _is_pt else ('Unterschrift' if _is_de else 'Signature'))"/>
+    <t t-set="_fiscal_remark_label" t-value="'Nota de posición fiscal:' if _is_es else ('Observação de Posição Fiscal:' if _is_pt else ('Bemerkung zur steuerlichen Lage:' if _is_de else 'Fiscal Position Remark:'))"/>
+    <t t-set="_connect_label" t-value="'Conecte su software' if _is_es else ('Conecte seu software' if _is_pt else ('Verbinden Sie Ihre Software' if _is_de else 'Connect your software'))"/>
+    <t t-set="_with_label" t-value="'con' if _is_es else ('com' if _is_pt else ('mit' if _is_de else 'with'))"/>
+    <t t-set="_auto_quotes_label" t-value="'para crear cotizaciones automáticamente.' if _is_es else ('para criar orçamentos automaticamente.' if _is_pt else ('um Angebote automatisch zu erstellen.' if _is_de else 'to create quotes automatically.'))"/>
+
     <t t-set="is_proforma" t-value="env.context.get('proforma', False) or is_pro_forma"/>
+    
     <t t-set="layout_document_title">
-        <span t-if="is_proforma">Pro Forma Invoice # </span>
-        <span t-elif="doc.state in ['draft','sent']">Quotation # </span>
-        <span t-else="">Order # </span>
+        <span t-if="is_proforma"><t t-out="_proforma_label"/></span>
+        <span t-elif="doc.state in ['draft','sent']"><t t-out="_quotation_label"/></span>
+        <span t-else=""><t t-out="_order_label"/></span>
         <span t-field="doc.name">SO0000</span>
     </t>
-    <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
-    <!-- i18n: global labels resolved from partner language -->
-    <t t-set="_lang" t-value="doc.partner_id.lang or 'en_US'"/>
-    <t t-set="_svc_date_label" t-value="'Fecha de Servicio' if (_lang and _lang.startswith('es')) else {'pt_BR': 'Data do Serviço', 'de_DE': 'Servicedatum'}.get(_lang, 'Service Date')"/>
+
     <t t-if="doc.partner_shipping_id == doc.partner_invoice_id                          and doc.partner_invoice_id != doc.partner_id                          or doc.partner_shipping_id != doc.partner_invoice_id">
         <t t-set="information_block">
             <strong>
                 <t t-if="doc.partner_shipping_id == doc.partner_invoice_id">
-                    Invoicing and Shipping Address
+                    <t t-out="_inv_ship_label"/>
                 </t>
                 <t t-else="">
-                    Invoicing Address
+                    <t t-out="_inv_label"/>
                 </t>
             </strong>
             <div t-field="doc.partner_invoice_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
             <t t-if="doc.partner_shipping_id != doc.partner_invoice_id">
-                <strong class="d-block mt-3">Shipping Address</strong>
+                <strong class="d-block mt-3"><t t-out="_ship_label"/></strong>
                 <div t-field="doc.partner_shipping_id" t-options="{&quot;widget&quot;: &quot;contact&quot;, &quot;fields&quot;: [&quot;address&quot;, &quot;name&quot;, &quot;phone&quot;], &quot;no_marker&quot;: True, &quot;phone_icons&quot;: True}"/>
             </t>
         </t>
@@ -47,8 +80,6 @@
 
             <div class="row mb-4" id="informations">
                 <div class="col" name="informations_partner">
-                    <t t-set="_addr_lang" t-value="doc.partner_id.lang or 'en_US'"/>
-                    <t t-set="_client_label" t-value="'Cliente' if (_addr_lang and _addr_lang.startswith('es')) else {'pt_BR': 'Cliente', 'de_DE': 'Kunde'}.get(_addr_lang, 'Client')"/>
                     <strong t-attf-style="color: #{doc.company_id.secondary_color or '#E5B745'} !important;"><t t-out="_client_label"/></strong>
                     <div>
                         <span t-field="doc.partner_id.name"/>
@@ -60,12 +91,11 @@
                     </t>
                 </div>
                 <div t-if="doc.client_order_ref" class="col" name="informations_reference">
-                    <strong>Your Reference</strong>
+                    <strong><t t-out="_ref_label"/></strong>
                     <div t-field="doc.client_order_ref">SO0000</div>
                 </div>
                 <div t-if="doc.date_order" class="col" name="informations_date">
-                    <strong t-if="is_proforma">Issued Date</strong>
-                    <strong t-elif="doc.state in ['draft', 'sent']"><t t-out="_svc_date_label"/></strong>
+                    <strong t-if="is_proforma"><t t-out="_issued_label"/></strong>
                     <strong t-else=""><t t-out="_svc_date_label"/></strong>
                     <div t-field="doc.date_order" t-options="{&quot;widget&quot;: &quot;date&quot;}">2023-12-31</div>
                 </div>
@@ -79,13 +109,13 @@
                     <div t-else="" t-field="doc.incoterm.code"/>
                 </div>
                 <div t-if="doc.commitment_date" class="col" name="delivery_date">
-                    <strong>Delivery Date</strong>
+                    <strong><t t-out="_delivery_label"/></strong>
                     <div t-field="doc.commitment_date" t-options="{'widget': 'date'}">
                         2023-12-31
                     </div>
                 </div>
                 <div t-if="doc.user_id.name" class="col">
-                    <strong>Contact</strong>
+                    <strong><t t-out="_contact_label"/></strong>
                     <div t-field="doc.user_id">Mitchell Admin</div>
                 </div>
             </div>
@@ -102,17 +132,17 @@
                 <!-- In case we want to repeat the header, remove "display: table-row-group" -->
                 <thead style="display: table-row-group">
                     <tr>
-                        <th name="th_description" class="text-start">Description</th>
-                        <th name="th_quantity" class="text-end text-nowrap">Quantity</th>
-                        <th name="th_priceunit" class="text-end text-nowrap">Unit Price</th>
+                        <th name="th_description" class="text-start"><t t-out="_desc_label"/></th>
+                        <th name="th_quantity" class="text-end text-nowrap"><t t-out="_qty_label"/></th>
+                        <th name="th_priceunit" class="text-end text-nowrap"><t t-out="_priceunit_label"/></th>
                         <th name="th_discount" t-if="display_discount" class="text-end">
-                            <span>Disc.%</span>
+                            <span><t t-out="_discount_label"/></span>
                         </th>
                         <th name="th_taxes" t-if="display_taxes" class="text-end">
-                            <span>Taxes</span>
+                            <span><t t-out="_taxes_label"/></span>
                         </th>
                         <th name="th_subtotal" class="text-end">
-                            <span>Amount</span>
+                            <span><t t-out="_amount_label"/></span>
                         </th>
                     </tr>
                 </thead>
@@ -277,7 +307,7 @@
             <div t-if="not doc.signature or not doc.env.context.get('sale_include_signature')" class="oe_structure"/>
             <div t-else="" class="mt-4 ml64 mr4" name="signature">
                 <div class="offset-8">
-                    <strong>Signature</strong>
+                    <strong><t t-out="_signature_label"/></strong>
                 </div>
                 <div class="offset-8">
                     <img t-att-src="image_data_uri(doc.signature)" style="max-height: 4cm; max-width: 8cm;"/>
@@ -293,7 +323,7 @@
                 </p>
                 <div class="oe_structure"/>
                 <p t-if="doc.fiscal_position_id and not is_html_empty(doc.fiscal_position_id.sudo().note)" id="fiscal_position_remark">
-                    <strong>Fiscal Position Remark:</strong>
+                    <strong><t t-out="_fiscal_remark_label"/></strong>
                     <span t-field="doc.fiscal_position_id.sudo().note">No further requirements for this payment</span>
                 </p>
             </div>
@@ -301,7 +331,7 @@
             <t t-set="base_address" t-value="doc.env['ir.config_parameter'].sudo().get_str('web.base.url')"/>
             <t t-set="portal_url" t-value="base_address + '/my/orders/' + str(doc.id) + '#portal_connect_software_modal_btn'"/>
             <div t-if="any(u._is_portal() for u in doc.partner_id.user_ids) and doc._get_edi_builders()" class="text-center">
-                <a t-att-href="portal_url">Connect your software</a> with <t t-out="doc.company_id.name"/> to create quotes automatically.
+                <a t-att-href="portal_url"><t t-out="_connect_label"/></a> <t t-out="_with_label"/> <t t-out="doc.company_id.name"/> <t t-out="_auto_quotes_label"/>
             </div>
         </div>
     </t>
