@@ -18,7 +18,7 @@
     <t t-set="_order_label" t-value="'Pedido nº ' if _is_es else ('Pedido nº ' if _is_pt else ('Auftrag Nr. ' if _is_de else 'Order # '))"/>
     
     <t t-set="_desc_label" t-value="'Descripción' if _is_es else ('Descrição' if _is_pt else ('Beschreibung' if _is_de else 'Description'))"/>
-    <t t-set="_qty_label" t-value="'Cantidad' if _is_es else ('Quantidade' if _is_pt else ('Menge' if _is_de else 'Quantity'))"/>
+    <t t-set="_qty_label" t-value="'Cantidad PAX' if _is_es else ('Quantidade PAX' if _is_pt else ('Menge PAX' if _is_de else 'Quantity PAX'))"/>
     <t t-set="_priceunit_label" t-value="'Precio Unitario' if _is_es else ('Preço Unitário' if _is_pt else ('Einzelpreis' if _is_de else 'Unit Price'))"/>
     <t t-set="_discount_label" t-value="'Desc.%' if _is_es else ('Desc.%' if _is_pt else ('Rabatt %' if _is_de else 'Disc.%'))"/>
     <t t-set="_taxes_label" t-value="'Impuestos' if _is_es else ('Impostos' if _is_pt else ('Steuern' if _is_de else 'Taxes'))"/>
@@ -33,6 +33,7 @@
     <t t-set="_connect_label" t-value="'Conecte su software' if _is_es else ('Conecte seu software' if _is_pt else ('Verbinden Sie Ihre Software' if _is_de else 'Connect your software'))"/>
     <t t-set="_with_label" t-value="'con' if _is_es else ('com' if _is_pt else ('mit' if _is_de else 'with'))"/>
     <t t-set="_auto_quotes_label" t-value="'para crear cotizaciones automáticamente.' if _is_es else ('para criar orçamentos automaticamente.' if _is_pt else ('um Angebote automatisch zu erstellen.' if _is_de else 'to create quotes automatically.'))"/>
+    <t t-set="_itinerary_title" t-value="'Detalles del Servicio e Itinerario' if _is_es else ('Detalhes do Serviço e Itinerário' if _is_pt else ('Servicedetails &amp; Reiseverlauf' if _is_de else 'Service Details &amp; Itinerary'))"/>
 
     <t t-set="is_proforma" t-value="env.context.get('proforma', False) or is_pro_forma"/>
     
@@ -218,15 +219,11 @@
                             </tr>
                             <tr t-else="" name="tr_product">
                                 <td name="td_product_name" class="w-100" t-att-style="padding_style">
-                                    <span t-field="line.name">Bacon Burger</span>
+                                    <span t-out="line.product_id.name if line.product_id else line.name"/>
                                 </td>
                                 <td name="td_product_quantity" class="o_td_quantity text-end">
-                                    <span t-field="line.product_uom_qty" class="text-nowrap">3</span>
-                                    <span t-field="line.product_uom_id">units</span>
-                                    <span t-if="line.product_uom_id != line.product_id.uom_id" class="text-muted small">
-                                        <t t-set="quantity_in_product_uom" t-value="line.product_uom_id._compute_quantity(line.product_uom_qty, line.product_id.uom_id)"/>
-                                        <br/><span t-out="quantity_in_product_uom" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}"/> <span t-field="line.product_id.uom_id"/>
-                                    </span>
+                                    <span t-out="int(line.product_uom_qty)" class="text-nowrap">3</span>
+                                    <span>PAX</span>
                                 </td>
                                 <td name="td_product_priceunit" class="text-end text-nowrap">
                                     <span t-if="not collapse_prices and line.discount &lt; 0" t-out="(1 - line.discount / 100.0) * line.price_unit" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;decimal_precision&quot;: &quot;Product Price&quot;}"/>
@@ -303,6 +300,37 @@
                 </div>
             </div>
             <div class="oe_structure"/>
+
+            <!-- Service details and descriptions (Itineraries) -->
+            <div id="product_descriptions" style="margin-top: 30px; page-break-inside: avoid;">
+                <t t-set="has_descriptions" t-value="any(not l.display_type and l.product_id and (l.product_id.x_description_sale_html or l.product_id.description_sale) for l in lines_to_report)"/>
+                <t t-if="has_descriptions">
+                    <div style="margin-bottom: 12px;">
+                        <span t-attf-style="display: inline-block; font-size: 12px; font-weight: bold; color: #{doc.company_id.secondary_color or '#E5B745'}; border-bottom: 2px solid #{doc.company_id.secondary_color or '#E5B745'}; padding-bottom: 2px;">
+                            <t t-out="_itinerary_title"/>
+                        </span>
+                    </div>
+                    <t t-foreach="lines_to_report" t-as="line">
+                        <t t-if="not line.display_type and line.product_id and (line.product_id.x_description_sale_html or line.product_id.description_sale)">
+                            <div style="margin-bottom: 16px; page-break-inside: avoid;">
+                                <div t-attf-style="font-size: 11px; font-weight: bold; color: #{doc.company_id.primary_color or '#20603D'}; margin-bottom: 4px;">
+                                    <span t-field="line.product_id.name"/>
+                                </div>
+                                <div style="font-size: 10px; color: #4b5563; line-height: 1.45; padding-left: 8px; border-left: 1px solid #e5e7eb;">
+                                    <t t-if="line.product_id.x_description_sale_html">
+                                        <t t-out="line.product_id.x_description_sale_html"/>
+                                    </t>
+                                    <t t-else="">
+                                        <div style="white-space: pre-line;">
+                                            <span t-field="line.product_id.description_sale"/>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </t>
+            </div>
 
             <div t-if="not doc.signature or not doc.env.context.get('sale_include_signature')" class="oe_structure"/>
             <div t-else="" class="mt-4 ml64 mr4" name="signature">
