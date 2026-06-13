@@ -9,13 +9,14 @@ from odoo_cli import OdooClient
 from constants import *
 from constants import _get_model
 
-def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, client_print_action_id: int) -> int:
+def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, client_print_action_id: int, save_action_id: int) -> int:
     arch_db = f"""
 <form string="Cotización personalizada" create="true" edit="true">
     <sheet>
         <group col="2">
             <field name="x_sale_order_id" readonly="1"/>
             <field name="x_quote_name" placeholder="Ej. Machu Picchu 8 días"/>
+            <field name="x_service_type"/>
             <field name="x_passenger_qty"/>
         </group>
         <separator string="Productos para cotización custom"/>
@@ -33,14 +34,16 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, c
                         <separator string="Servicios incluidos"/>
                         <field name="x_service_line_ids" nolabel="1" mode="list,form">
                             <list editable="bottom">
-                                <field name="x_name" string="Servicio"/>
+                                <field name="x_template_id" string="Servicio (Buscar/Crear)" options="{{'create_name_field': 'x_name'}}"/>
+                                <field name="x_name" string="Detalle de servicio" optional="hide"/>
                                 <field name="x_price" string="Precio (USD)"/>
                                 <field name="x_is_group" string="¿Grupal?"/>
                                 <field name="x_price_pax" string="PRECIO PAX" readonly="1"/>
                             </list>
                             <form>
                                 <group col="1">
-                                    <field name="x_name"/>
+                                    <field name="x_template_id" string="Servicio (Buscar/Crear)" options="{{'create_name_field': 'x_name'}}"/>
+                                    <field name="x_name" string="Detalle de servicio"/>
                                     <field name="x_price"/>
                                     <field name="x_is_group"/>
                                     <field name="x_price_pax" readonly="1"/>
@@ -98,12 +101,16 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, c
                     <field name="x_final_price" nolabel="1" readonly="1"/>
                 </group>
             </group>
-        </group>
+        <separator string="Servicios no incluidos (HTML)"/>
+        <field name="x_not_included_services" widget="html"/>
     </sheet>
     <footer>
-        <button string="📊 PDF Interno" type="action" name="{print_action_id}"
+        <button string="💾 Guardar" type="action" name="{save_action_id}"
                 class="btn-primary"
                 style="background-color:#20603D !important;border-color:#20603D !important;color:#ffffff !important;"/>
+        <button string="📊 PDF Interno" type="action" name="{print_action_id}"
+                class="btn-secondary"
+                style="background-color:#ffffff !important;border:2px solid #E5B745 !important;color:#E5B745 !important;font-weight:700 !important;"/>
         <button string="📄 PDF Cliente" type="action" name="{client_print_action_id}"
                 class="btn-secondary"
                 style="background-color:#ffffff !important;border:2px solid #20603D !important;color:#20603D !important;font-weight:700 !important;"/>
@@ -133,28 +140,62 @@ def _upsert_wizard_view(client: OdooClient, model: dict, print_action_id: int, c
 
 def _upsert_sale_button_action(client: OdooClient, sale_order_model: dict, wizard_model: dict, wizard_view_id: int) -> int:
     code = f"""
-ctx = dict(env.context or {{}})
 if records:
-    ctx.update({{
-        'default_x_sale_order_id': records[0].id,
-        'default_x_passenger_qty': 1,
-        'default_x_profit_pct': 20.0,
-        'default_x_apply_igv': True,
-        'default_x_igv_pct': 18.0,
-        'default_x_apply_renta': False,
-        'default_x_renta_pct': 0.3,
-        'default_x_card_commission_pct': 5.0,
-    }})
+    so = records[0]
+    wiz_id = so.x_custom_quote_wizard_id.id if so.x_custom_quote_wizard_id else False
 
-action = {{
-    'type': 'ir.actions.act_window',
-    'name': 'Cotización personalizada',
-    'res_model': '{wizard_model['model']}',
-    'view_mode': 'form',
-    'view_id': {wizard_view_id},
-    'target': 'new',
-    'context': dict(ctx, dialog_size='large'),
-}}
+    # 1. Buscar o crear producto "Custom Quotation"
+    product = env['product.product'].search([('name', '=', 'Custom Quotation')], limit=1)
+    if not product:
+        product = env['product.product'].create({{
+            'name': 'Custom Quotation',
+            'type': 'service',
+            'invoice_policy': 'order',
+        }})
+
+    # 2. Agregar linea al presupuesto si no existe
+    line = env['sale.order.line'].search([
+        ('order_id', '=', so.id),
+        ('product_id', '=', product.id)
+    ], limit=1)
+    if not line:
+        env['sale.order.line'].create({{
+            'order_id': so.id,
+            'product_id': product.id,
+            'product_uom_qty': 1.0,
+            'price_unit': 0.0,
+            'name': 'Custom Quotation',
+        }})
+
+    # 3. Crear el wizard si no existe
+    if not wiz_id:
+        wizard = env['{wizard_model['model']}'].create({{
+            'x_sale_order_id': so.id,
+            'x_quote_name': so.x_package_name or '',
+            'x_service_type': 'private',
+            'x_passenger_qty': 1,
+            'x_profit_pct': 20.0,
+            'x_apply_igv': True,
+            'x_igv_pct': 18.0,
+            'x_apply_renta': False,
+            'x_renta_pct': 0.3,
+            'x_card_commission_pct': 5.0,
+        }})
+        wiz_id = wizard.id
+        so.write({{
+            'x_custom_quote_wizard_id': wiz_id
+        }})
+
+    action = {{
+        'type': 'ir.actions.act_window',
+        'name': 'Cotización personalizada',
+        'res_model': '{wizard_model['model']}',
+        'view_mode': 'form',
+        'res_id': wiz_id,
+        'view_id': {wizard_view_id},
+        'target': 'new',
+        'context': {{'dialog_size': 'large'}},
+    }}
 """.strip()
 
     existing = client.search_read(
@@ -216,9 +257,9 @@ def _upsert_sale_form_button_view(client: OdooClient, action_id: int) -> int:
         return vid
     return client.create("ir.ui.view", vals)
 
-def run(client: OdooClient, wizard_model: dict, print_action_id: int, client_print_action_id: int):
+def run(client: OdooClient, wizard_model: dict, print_action_id: int, client_print_action_id: int, save_action_id: int):
     print("-> Configurando vistas y botones...")
-    wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id, client_print_action_id)
+    wizard_view_id = _upsert_wizard_view(client, wizard_model, print_action_id, client_print_action_id, save_action_id)
     sale_order_model = _get_model(client, "sale.order")
     sale_action_id = _upsert_sale_button_action(client, sale_order_model, wizard_model, wizard_view_id)
     sale_view_id = _upsert_sale_form_button_view(client, sale_action_id)

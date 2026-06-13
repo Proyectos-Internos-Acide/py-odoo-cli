@@ -51,6 +51,20 @@ def _ensure_service_line_model(client: OdooClient) -> dict:
     )
     return {"id": model_id, "model": WIZ_SERVICE_LINE_MODEL, "name": WIZ_SERVICE_LINE_MODEL_NAME}
 
+def _ensure_service_template_model(client: OdooClient) -> dict:
+    rec = _get_model(client, WIZ_SERVICE_TEMPLATE_MODEL)
+    if rec:
+        return rec
+    model_id = client.create(
+        "ir.model",
+        {
+            "name": WIZ_SERVICE_TEMPLATE_MODEL_NAME,
+            "model": WIZ_SERVICE_TEMPLATE_MODEL,
+            "state": "manual",
+        },
+    )
+    return {"id": model_id, "model": WIZ_SERVICE_TEMPLATE_MODEL, "name": WIZ_SERVICE_TEMPLATE_MODEL_NAME}
+
 def _ensure_field(
     client: OdooClient,
     model: dict,
@@ -59,6 +73,7 @@ def _ensure_field(
     ttype: str,
     relation: str | None = None,
     relation_field: str | None = None,
+    selection: str | None = None,
 ) -> int:
     existing = client.search_read(
         "ir.model.fields",
@@ -67,6 +82,7 @@ def _ensure_field(
         limit=1,
     )
     if existing:
+        # If selection changed or needs update, Odoo usually handles it, but let's keep it simple
         return existing[0]["id"]
 
     vals = {
@@ -82,6 +98,8 @@ def _ensure_field(
         vals["relation"] = relation
     if relation_field:
         vals["relation_field"] = relation_field
+    if selection:
+        vals["selection"] = selection
     return client.create("ir.model.fields", vals)
 
 def run(client: OdooClient):
@@ -89,8 +107,12 @@ def run(client: OdooClient):
     wizard_model = _ensure_model(client)
     wizard_line_model = _ensure_line_model(client)
     wizard_service_line_model = _ensure_service_line_model(client)
+
+    sale_order_model = _get_model(client, "sale.order")
+    _ensure_field(client, sale_order_model, "x_custom_quote_wizard_id", "Wizard de cotización personalizada", "many2one", relation=WIZ_MODEL)
     _ensure_field(client, wizard_model, "x_sale_order_id", "Cotización origen", "many2one", relation="sale.order")
     _ensure_field(client, wizard_model, "x_quote_name", "Nombre de la cotización", "char")
+    _ensure_field(client, wizard_model, "x_service_type", "Tipo de servicio", "selection", selection="[('private', 'Privado'), ('group', 'Grupal')]")
     _ensure_field(client, wizard_model, "x_passenger_qty", "Cantidad de pasajeros", "integer")
     _ensure_field(client, wizard_model, "x_operational_cost_pax", "Costo operativo por PAX", "float")
     _ensure_field(client, wizard_model, "x_fixed_cost", "Costo fijo / gastos administrativos", "float")
@@ -108,6 +130,8 @@ def run(client: OdooClient):
     _ensure_field(client, wizard_model, "x_card_commission_pct", "Comisión tarjetas (%)", "float")
     _ensure_field(client, wizard_model, "x_card_commission_amount", "Comisión tarjetas (USD)", "float")
     _ensure_field(client, wizard_model, "x_final_price", "Precio final (USD)", "float")
+    _ensure_field(client, wizard_model, "x_final_price_total", "Precio final total (USD)", "float")
+    _ensure_field(client, wizard_model, "x_not_included_services", "Servicios no incluidos", "html")
 
     _ensure_field(client, wizard_line_model, "x_wizard_id", "Wizard", "many2one", relation=WIZ_MODEL)
     _ensure_field(client, wizard_line_model, "x_passenger_qty", "Cantidad pasajeros (snapshot)", "integer")
@@ -121,11 +145,19 @@ def run(client: OdooClient):
     _ensure_field(client, wizard_service_line_model, "x_is_group", "¿Grupal?", "boolean")
     _ensure_field(client, wizard_service_line_model, "x_price", "Precio", "float")
     _ensure_field(client, wizard_service_line_model, "x_price_pax", "PRECIO PAX", "float")
+
+    # Modelo maestro de plantillas de servicio para autocompletado y reuso
+    service_template_model = _ensure_service_template_model(client)
+    _ensure_field(client, service_template_model, "x_name", "Nombre de Servicio", "char")
+    _ensure_field(client, service_template_model, "x_price", "Precio por defecto", "float")
+
+    # Relación en la línea de servicio del wizard
+    _ensure_field(client, wizard_service_line_model, "x_template_id", "Servicio (Plantilla)", "many2one", relation=WIZ_SERVICE_TEMPLATE_MODEL)
     
     _ensure_field(client, wizard_line_model, "x_service_line_ids", "Servicios incluidos", "one2many", relation=WIZ_SERVICE_LINE_MODEL, relation_field="x_line_id")
     _ensure_field(client, wizard_model, "x_line_ids", "Líneas custom", "one2many", relation=WIZ_LINE_MODEL, relation_field="x_wizard_id")
 
-    for model_name in [WIZ_MODEL, WIZ_LINE_MODEL, WIZ_SERVICE_LINE_MODEL]:
+    for model_name in [WIZ_MODEL, WIZ_LINE_MODEL, WIZ_SERVICE_LINE_MODEL, WIZ_SERVICE_TEMPLATE_MODEL]:
         m = _get_model(client, model_name)
         existing_acl = client.execute("ir.model.access", "search_read", [["model_id", "=", m["id"]], ["group_id", "=", False]], fields=["id"], limit=1, context={"active_test": False})
         vals_acl = {"name": f"access_{model_name}_all", "model_id": m["id"], "perm_read": True, "perm_write": True, "perm_create": True, "perm_unlink": True}

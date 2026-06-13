@@ -34,6 +34,7 @@
     <t t-set="_with_label" t-value="'con' if _is_es else ('com' if _is_pt else ('mit' if _is_de else 'with'))"/>
     <t t-set="_auto_quotes_label" t-value="'para crear cotizaciones automáticamente.' if _is_es else ('para criar orçamentos automaticamente.' if _is_pt else ('um Angebote automatisch zu erstellen.' if _is_de else 'to create quotes automatically.'))"/>
     <t t-set="_itinerary_title" t-value="'Detalles del Servicio e Itinerario' if _is_es else ('Detalhes do Serviço e Itinerário' if _is_pt else ('Servicedetails &amp; Reiseverlauf' if _is_de else 'Service Details &amp; Itinerary'))"/>
+    <t t-set="_package_name_label" t-value="'Paquete' if _is_es else ('Pacote' if _is_pt else ('Paket' if _is_de else 'Package'))"/>
 
     <t t-set="is_proforma" t-value="env.context.get('proforma', False) or is_pro_forma"/>
     
@@ -65,19 +66,19 @@
         <div class="page">
             <div class="oe_structure"/>
 
-            <!-- Product and variant summary (minimalist) -->
-            <div id="product_variant_summary" style="margin-bottom: 14px; padding: 6px 12px; border-left: 2px solid #20603D;">
-                <t t-foreach="doc.order_line" t-as="pline">
-                    <t t-if="not pline.display_type and pline.product_id">
-                        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
-                            <span style="font-size: 11px; font-weight: 700; color: #111827; margin-right: 4px;" t-field="pline.product_id.product_tmpl_id.name"/>
-                            <t t-foreach="pline.product_id.product_template_attribute_value_ids" t-as="av">
-                                <span style="display: inline-block; font-size: 9px; background: #ecfdf5; color: #20603D; border: 1px solid #d1fae5; border-radius: 3px; padding: 1px 5px;"><span t-field="av.name"/></span>
-                            </t>
-                        </div>
-                    </t>
-                </t>
-            </div>
+            <!-- Package name summary (shown only when filled) -->
+            <t t-if="doc.x_package_name">
+                <div id="product_variant_summary" style="margin-bottom: 20px; padding: 12px 18px; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-left: 5px solid #20603D; border-radius: 0 6px 6px 0; box-shadow: 0 1px 4px rgba(32,96,61,0.08);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="display: inline-block; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #E5B745; background-color: #20603D; padding: 3px 10px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;">
+                            <t t-out="_package_name_label"/>
+                        </span>
+                        <span style="font-size: 15px; font-weight: 800; color: #20603D; letter-spacing: -0.01em; line-height: 1.2;" t-field="doc.x_package_name"/>
+                    </div>
+                </div>
+            </t>
+
+
 
             <div class="row mb-4" id="informations">
                 <div class="col" name="informations_partner">

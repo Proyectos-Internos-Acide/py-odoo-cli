@@ -100,6 +100,11 @@ if target_records:
         pax_qty = wiz.x_passenger_qty or 1
         for line in wiz.x_line_ids:
             line.write({'x_passenger_qty': pax_qty})
+            for svc in line.x_service_line_ids:
+                price = svc.x_price or 0.0
+                svc.write({
+                    'x_price_pax': (price / pax_qty) if (svc.x_is_group and pax_qty) else price
+                })
 """.strip()
 
     action_existing = client.search_read(
@@ -190,6 +195,7 @@ if target_records:
             'x_subtotal_after_tax': subtotal_with_tax,
             'x_card_commission_amount': card_commission,
             'x_final_price': final_price,
+            'x_final_price_total': final_price * (wiz.x_passenger_qty or 1),
         })
 """.strip()
 
@@ -296,6 +302,7 @@ if target_records:
                 'x_subtotal_after_tax': subtotal_with_tax,
                 'x_card_commission_amount': card_commission,
                 'x_final_price': final_price,
+                'x_final_price_total': final_price * (wiz.x_passenger_qty or 1),
             })
 """.strip()
 
@@ -442,12 +449,171 @@ if target_records:
         else:
             client.create("base.automation", renta_auto_vals)
 
+def _upsert_service_template_autocomplete(client: OdooClient, service_line_model: dict) -> None:
+    action_name = "WTK - Autocompletar servicio desde plantilla"
+    action_code = """
+target_records = records or record
+if target_records:
+    for rec in target_records:
+        if rec.x_template_id:
+            rec.write({
+                'x_name': rec.x_template_id.x_name,
+                'x_price': rec.x_template_id.x_price or 0.0,
+            })
+""".strip()
+    action_existing = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", action_name], ["model_id", "=", service_line_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    action_vals = {"name": action_name, "model_id": service_line_model["id"], "state": "code", "code": action_code}
+    if action_existing:
+        action_id = action_existing[0]["id"]
+        client.write("ir.actions.server", [action_id], action_vals)
+    else:
+        action_id = client.create("ir.actions.server", action_vals)
+
+    field_recs = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_SERVICE_LINE_MODEL], ["name", "=", "x_template_id"]],
+        fields=["id"],
+        limit=1,
+    )
+    if not field_recs:
+        return
+
+    automation_name = "WTK - Auto autocompletar plantilla servicio"
+    automation_existing = client.search_read(
+        "base.automation",
+        domain=[["name", "=", automation_name], ["model_id", "=", service_line_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    automation_vals = {
+        "name": automation_name,
+        "model_id": service_line_model["id"],
+        "trigger": "on_change",
+        "active": True,
+        "on_change_field_ids": [(6, 0, [field_recs[0]["id"]])],
+        "action_server_ids": [(6, 0, [action_id])],
+    }
+    if automation_existing:
+        client.write("base.automation", [automation_existing[0]["id"]], automation_vals)
+    else:
+        client.create("base.automation", automation_vals)
+
+def _upsert_name_sync_automations(client: OdooClient, wizard_model: dict) -> None:
+    # 1. Wizard -> Sale Order Sync
+    wiz_action_name = "WTK - Sync Quote Name to Sale Order"
+    wiz_code = """
+target_records = records or record
+if target_records:
+    for wiz in target_records:
+        if wiz.x_sale_order_id and wiz.x_quote_name != wiz.x_sale_order_id.x_package_name:
+            wiz.x_sale_order_id.write({'x_package_name': wiz.x_quote_name or ''})
+""".strip()
+    wiz_action = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", wiz_action_name], ["model_id", "=", wizard_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    wiz_action_vals = {"name": wiz_action_name, "model_id": wizard_model["id"], "state": "code", "code": wiz_code}
+    if wiz_action:
+        wiz_action_id = wiz_action[0]["id"]
+        client.write("ir.actions.server", [wiz_action_id], wiz_action_vals)
+    else:
+        wiz_action_id = client.create("ir.actions.server", wiz_action_vals)
+
+    wiz_field = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", WIZ_MODEL], ["name", "=", "x_quote_name"]],
+        fields=["id"],
+        limit=1,
+    )
+    if wiz_field:
+        wiz_auto_name = "WTK - Auto Sync Quote Name to SO"
+        wiz_auto = client.search_read(
+            "base.automation",
+            domain=[["name", "=", wiz_auto_name], ["model_id", "=", wizard_model["id"]]],
+            fields=["id"],
+            limit=1,
+        )
+        wiz_auto_vals = {
+            "name": wiz_auto_name,
+            "model_id": wizard_model["id"],
+            "trigger": "on_change",
+            "active": True,
+            "on_change_field_ids": [(6, 0, [wiz_field[0]["id"]])],
+            "action_server_ids": [(6, 0, [wiz_action_id])],
+        }
+        if wiz_auto:
+            client.write("base.automation", [wiz_auto[0]["id"]], wiz_auto_vals)
+        else:
+            client.create("base.automation", wiz_auto_vals)
+
+    # 2. Sale Order -> Wizard Sync
+    so_model = _get_model(client, "sale.order")
+    if not so_model:
+        return
+
+    so_action_name = "WTK - Sync Package Name to Wizard"
+    so_code = """
+target_records = records or record
+if target_records:
+    for so in target_records:
+        if so.x_custom_quote_wizard_id and so.x_package_name != so.x_custom_quote_wizard_id.x_quote_name:
+            so.x_custom_quote_wizard_id.write({'x_quote_name': so.x_package_name or ''})
+""".strip()
+    so_action = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", so_action_name], ["model_id", "=", so_model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    so_action_vals = {"name": so_action_name, "model_id": so_model["id"], "state": "code", "code": so_code}
+    if so_action:
+        so_action_id = so_action[0]["id"]
+        client.write("ir.actions.server", [so_action_id], so_action_vals)
+    else:
+        so_action_id = client.create("ir.actions.server", so_action_vals)
+
+    so_field = client.search_read(
+        "ir.model.fields",
+        domain=[["model", "=", "sale.order"], ["name", "=", "x_package_name"]],
+        fields=["id"],
+        limit=1,
+    )
+    if so_field:
+        so_auto_name = "WTK - Auto Sync Package Name to Wizard"
+        so_auto = client.search_read(
+            "base.automation",
+            domain=[["name", "=", so_auto_name], ["model_id", "=", so_model["id"]]],
+            fields=["id"],
+            limit=1,
+        )
+        so_auto_vals = {
+            "name": so_auto_name,
+            "model_id": so_model["id"],
+            "trigger": "on_change",
+            "active": True,
+            "on_change_field_ids": [(6, 0, [so_field[0]["id"]])],
+            "action_server_ids": [(6, 0, [so_action_id])],
+        }
+        if so_auto:
+            client.write("base.automation", [so_auto[0]["id"]], so_auto_vals)
+        else:
+            client.create("base.automation", so_auto_vals)
+
 def run(client: OdooClient, wizard_model: dict, wizard_service_line_model: dict):
     print("-> Configurando lógica y automatizaciones...")
     _upsert_wizard_passenger_qty_sync(client, wizard_model)
     _upsert_service_price_pax_onchange(client, wizard_service_line_model)
     _upsert_wizard_cost_totals_automation(client, wizard_model, wizard_service_line_model)
     _upsert_tax_exclusive_automations(client, wizard_model)
+    _upsert_service_template_autocomplete(client, wizard_service_line_model)
+    _upsert_name_sync_automations(client, wizard_model)
 
 if __name__ == "__main__":
     client = OdooClient()

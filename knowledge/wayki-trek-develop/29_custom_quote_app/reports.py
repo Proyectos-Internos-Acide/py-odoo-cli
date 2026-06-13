@@ -291,9 +291,38 @@ if records:
             'x_subtotal_after_tax': subtotal_with_tax,
             'x_card_commission_amount': card_commission,
             'x_final_price': final_price,
+            'x_final_price_total': final_price * (wizard.x_passenger_qty or 1),
         }})
 
-    # 4. Ahora sí generar el PDF con los valores reales
+        # 4. Sincronizar precio en la linea del presupuesto principal
+        so = wizard.x_sale_order_id
+        if so:
+            product = env['product.product'].search([('name', '=', 'Custom Quotation')], limit=1)
+            if product:
+                line = env['sale.order.line'].search([
+                    ('order_id', '=', so.id),
+                    ('product_id', '=', product.id)
+                ], limit=1)
+                if line:
+                    line.write({{'price_unit': final_price}})
+
+            # 5. Generar PDF y adjuntar a Chatter
+            report_obj = env['ir.actions.report'].search([('name', '=', '{report_name}'), ('model', '=', '{model['model']}')], limit=1)
+            if report_obj:
+                pdf_content, dummy = env['ir.actions.report']._render_qweb_pdf(report_obj.id, [wizard.id])
+                attachment = env['ir.attachment'].create({{
+                    'name': f"Cotizacion_Interna_{{so.name}}.pdf",
+                    'type': 'binary',
+                    'raw': pdf_content,
+                    'res_model': 'sale.order',
+                    'res_id': so.id,
+                }})
+                so.message_post(
+                    body="Se ha generado y guardado la cotización personalizada (Interna).",
+                    attachment_ids=[attachment.id]
+                )
+
+    # 6. Ahora sí generar el PDF con los valores reales
     report = env['ir.actions.report'].search([('name', '=', '{report_name}'), ('model', '=', '{model['model']}')], limit=1)
     if report:
         action = report.report_action(records)
@@ -347,72 +376,66 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                     </table>
                     <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:1px solid #d1d5db;">
                         <tr>
-                            <td style="width:50%; padding:10px 12px; vertical-align:top; border-right:1px solid #e5e7eb; background:#fafafa;">
-                                <div style="font-size:9px; text-transform:uppercase; color:#6b7280; letter-spacing:0.5px;">Cotización</div>
-                                <div style="font-size:13px; font-weight:bold; color:#20603D;">
-                                    <span t-if="doc.x_sale_order_id" t-field="doc.x_sale_order_id.name"/>
-                                    <span t-else="">—</span>
-                                </div>
-                                <div t-if="doc.x_sale_order_id and doc.x_sale_order_id.partner_id" style="margin-top:8px; font-size:10px; color:#374151;">
-                                    <span t-field="doc.x_sale_order_id.partner_id.name"/>
-                                </div>
-                            </td>
-                            <td style="width:50%; padding:10px 12px; vertical-align:top; background:#fafafa;">
+                            <td style="padding:10px 12px; vertical-align:top; background:#fafafa;">
                                 <table style="width:100%; font-size:10px;">
                                     <tr>
-                                        <td style="color:#6b7280; padding:2px 0;">Pasajeros (PAX)</td>
-                                        <td style="text-align:right; font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                        <td style="color:#6b7280; padding:2px 0; width:150px;">Nombre del Servicio</td>
+                                        <td style="font-weight:bold; color:#20603D;">
+                                            <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                            <span t-else="">—</span>
+                                        </td>
                                     </tr>
-                                    <tr t-if="doc.x_sale_order_id">
+                                    <tr>
+                                        <td style="color:#6b7280; padding:2px 0;">Tipo de servicio</td>
+                                        <td style="font-weight:bold;">
+                                            <span t-if="doc.x_service_type == 'private'">Privado</span>
+                                            <span t-elif="doc.x_service_type == 'group'">Grupal</span>
+                                            <span t-else="">—</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="color:#6b7280; padding:2px 0;">Cantidad de pasajeros (PAX)</td>
+                                        <td style="font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                    </tr>
+                                    <tr>
                                         <td style="color:#6b7280; padding:2px 0;">Moneda</td>
-                                        <td style="text-align:right; font-weight:bold;"><span t-out="wiz_cur.display_name"/></td>
+                                        <td style="font-weight:bold;"><span t-out="wiz_cur.display_name"/></td>
                                     </tr>
                                 </table>
                             </td>
                         </tr>
                     </table>
                     <div style="margin-bottom:8px;">
-                        <span style="display:inline-block; font-size:12px; font-weight:bold; color:#20603D; border-bottom:2px solid #20603D; padding-bottom:2px;">Productos y servicios incluidos</span>
+                        <span style="display:inline-block; font-size:12px; font-weight:bold; color:#20603D; border-bottom:2px solid #20603D; padding-bottom:2px;">Itinerario</span>
                     </div>
                     <table style="width:100%; border-collapse:collapse; font-size:10px; border:1px solid #cbd5e1;">
                         <thead>
                             <tr style="background:#20603D; color:#ffffff;">
                                 <th style="text-align:center; width:88px; padding:8px 6px; font-weight:bold;">Fecha</th>
                                 <th style="text-align:left; width:220px; padding:8px 6px; font-weight:bold;">Producto</th>
-                                <th style="text-align:left; padding:8px 6px; font-weight:bold;">Servicio incluido</th>
+                                <th style="text-align:left; padding:8px 6px; font-weight:bold;">Servicios incluidos</th>
                             </tr>
                         </thead>
                         <tbody>
                             <t t-if="doc.x_line_ids">
                                 <t t-foreach="doc.x_line_ids" t-as="line">
-                                    <t t-if="line.x_service_line_ids">
-                                        <t t-foreach="line.x_service_line_ids" t-as="svc">
-                                            <tr>
-                                                <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
-                                                    <span t-if="svc_index == 0"><span t-field="line.x_service_date"/></span>
-                                                </td>
-                                                <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
-                                                    <span t-if="svc_index == 0">
-                                                        <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
-                                                        <span t-else="">—</span>
-                                                    </span>
-                                                </td>
-                                                <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
-                                                    <span t-field="svc.x_name"/>
-                                                </td>
-                                            </tr>
-                                        </t>
-                                    </t>
-                                    <t t-else="">
-                                        <tr>
-                                            <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb;"><span t-field="line.x_service_date"/></td>
-                                            <td style="padding:7px 6px; border:1px solid #e5e7eb;">
-                                                <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
-                                                <span t-else="">—</span>
-                                            </td>
-                                            <td style="padding:7px 6px; border:1px solid #e5e7eb; color:#9ca3af; font-style:italic;">Sin servicios incluidos</td>
-                                        </tr>
-                                    </t>
+                                    <tr>
+                                        <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                            <span t-field="line.x_service_date"/>
+                                        </td>
+                                        <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                            <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
+                                            <span t-else="">—</span>
+                                        </td>
+                                        <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                            <t t-if="line.x_service_line_ids">
+                                                <span t-out="', '.join(line.x_service_line_ids.mapped('x_name'))"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span style="color:#9ca3af; font-style:italic;">Sin servicios incluidos</span>
+                                            </t>
+                                        </td>
+                                    </tr>
                                 </t>
                             </t>
                             <t t-else="">
@@ -432,6 +455,14 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                             </td>
                         </tr>
                     </table>
+                    <t t-if="doc.x_not_included_services">
+                        <div style="margin-top:20px; margin-bottom:12px; page-break-inside: avoid;">
+                            <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Servicios no incluidos</span>
+                        </div>
+                        <div style="font-size:10px; color:#4b5563; line-height:1.45; padding-left:8px; border-left:2px solid #E5B745; page-break-inside: avoid;">
+                            <t t-out="doc.x_not_included_services"/>
+                        </div>
+                    </t>
                     <p style="margin-top:22px; padding-top:12px; border-top:1px solid #e5e7eb; color:#6b7280; font-size:9px; text-align:center;">
                         Documento informativo generado desde Cotización personalizada · Wayki Trek · No constituye comprobante fiscal.
                     </p>
@@ -526,7 +557,36 @@ if records:
             'x_subtotal_after_tax': subtotal_with_tax,
             'x_card_commission_amount': card_commission,
             'x_final_price': final_price,
+            'x_final_price_total': final_price * (wizard.x_passenger_qty or 1),
         }})
+
+        # Sincronizar precio en la linea del presupuesto principal
+        so = wizard.x_sale_order_id
+        if so:
+            product = env['product.product'].search([('name', '=', 'Custom Quotation')], limit=1)
+            if product:
+                line = env['sale.order.line'].search([
+                    ('order_id', '=', so.id),
+                    ('product_id', '=', product.id)
+                ], limit=1)
+                if line:
+                    line.write({{'price_unit': final_price}})
+
+            # Generar PDF Cliente y adjuntar a Chatter
+            report_obj = env['ir.actions.report'].search([('name', '=', '{WIZ_CLIENT_REPORT_ACTION_NAME}'), ('model', '=', '{model['model']}')], limit=1)
+            if report_obj:
+                pdf_content, dummy = env['ir.actions.report']._render_qweb_pdf(report_obj.id, [wizard.id])
+                attachment = env['ir.attachment'].create({{
+                    'name': f"Cotizacion_Cliente_{{so.name}}.pdf",
+                    'type': 'binary',
+                    'raw': pdf_content,
+                    'res_model': 'sale.order',
+                    'res_id': so.id,
+                }})
+                so.message_post(
+                    body="Se ha generado y guardado la cotización personalizada (Cliente).",
+                    attachment_ids=[attachment.id]
+                )
 
     report = env['ir.actions.report'].search([('name', '=', '{WIZ_CLIENT_REPORT_ACTION_NAME}'), ('model', '=', '{model['model']}')], limit=1)
     if report:
@@ -552,6 +612,198 @@ if records:
     return client.create("ir.actions.server", vals)
 
 
+def _upsert_save_action(client: OdooClient, model: dict) -> int:
+    code = f"""
+if records:
+    action = {{
+        'type': 'ir.actions.act_window',
+        'res_model': '{model['model']}',
+        'view_mode': 'form',
+        'res_id': records[0].id,
+        'target': 'new',
+        'context': {{'dialog_size': 'large'}},
+    }}
+""".strip()
+    existing = client.search_read(
+        "ir.actions.server",
+        domain=[["name", "=", "WTK - Guardar wizard"], ["model_id", "=", model["id"]]],
+        fields=["id"],
+        limit=1,
+    )
+    vals = {
+        "name": "WTK - Guardar wizard",
+        "model_id": model["id"],
+        "state": "code",
+        "code": code,
+    }
+    if existing:
+        aid = existing[0]["id"]
+        client.write("ir.actions.server", [aid], vals)
+        return aid
+    return client.create("ir.actions.server", vals)
+
+
+def _upsert_so_client_report_template(client: OdooClient) -> int:
+    arch_db = """
+<t t-name="wtk.report_custom_quote_client_so">
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="so">
+            <t t-set="doc" t-value="so.x_custom_quote_wizard_id"/>
+            <t t-if="doc">
+                <t t-set="wiz_cur" t-value="so.currency_id if so.currency_id else env['res.currency'].search([('name','=','USD')], limit=1)"/>
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color:#1a1a1a; font-size:11px; line-height:1.45;">
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
+                            <tr>
+                                <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff;">
+                                    <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">
+                                        <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                        <span t-else="">Cotización personalizada</span>
+                                    </div>
+                                    <div style="font-size:10px; opacity:0.92; margin-top:4px;">Wayki Trek · Documento de referencia</div>
+                                </td>
+                            </tr>
+                        </table>
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:1px solid #d1d5db;">
+                            <tr>
+                                <td style="padding:10px 12px; vertical-align:top; background:#fafafa;">
+                                    <table style="width:100%; font-size:10px;">
+                                        <tr>
+                                            <td style="color:#6b7280; padding:2px 0; width:150px;">Nombre del Servicio</td>
+                                            <td style="font-weight:bold; color:#20603D;">
+                                                <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                                <span t-else="">—</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#6b7280; padding:2px 0;">Tipo de servicio</td>
+                                            <td style="font-weight:bold;">
+                                                <span t-if="doc.x_service_type == 'private'">Privado</span>
+                                                <span t-elif="doc.x_service_type == 'group'">Grupal</span>
+                                                <span t-else="">—</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#6b7280; padding:2px 0;">Cantidad de pasajeros (PAX)</td>
+                                            <td style="font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td style="color:#6b7280; padding:2px 0;">Moneda</td>
+                                            <td style="font-weight:bold;"><span t-out="wiz_cur.display_name"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="margin-bottom:8px;">
+                            <span style="display:inline-block; font-size:12px; font-weight:bold; color:#20603D; border-bottom:2px solid #20603D; padding-bottom:2px;">Itinerario</span>
+                        </div>
+                        <table style="width:100%; border-collapse:collapse; font-size:10px; border:1px solid #cbd5e1;">
+                            <thead>
+                                <tr style="background:#20603D; color:#ffffff;">
+                                    <th style="text-align:center; width:88px; padding:8px 6px; font-weight:bold;">Fecha</th>
+                                    <th style="text-align:left; width:220px; padding:8px 6px; font-weight:bold;">Producto</th>
+                                    <th style="text-align:left; padding:8px 6px; font-weight:bold;">Servicios incluidos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-if="doc.x_line_ids">
+                                    <t t-foreach="doc.x_line_ids" t-as="line">
+                                        <tr>
+                                            <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                <span t-field="line.x_service_date"/>
+                                            </td>
+                                            <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
+                                                <span t-else="">—</span>
+                                            </td>
+                                            <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                <t t-if="line.x_service_line_ids">
+                                                    <span t-out="', '.join(line.x_service_line_ids.mapped('x_name'))"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color:#9ca3af; font-style:italic;">Sin servicios incluidos</span>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <tr>
+                                        <td colspan="3" style="padding:14px; text-align:center; color:#6b7280; border:1px solid #e5e7eb;">
+                                            Sin productos agregados en esta cotización personalizada.
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                        <table style="width:100%; margin-top:10px; margin-bottom:8px;">
+                            <tr>
+                                <td style="text-align:right; padding:8px 0;">
+                                    <span style="font-size:11px; color:#374151;">Precio final:</span>
+                                    <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="doc.x_final_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                                </td>
+                            </tr>
+                        </table>
+                        <t t-if="doc.x_not_included_services">
+                            <div style="margin-top:20px; margin-bottom:12px; page-break-inside: avoid;">
+                                <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Servicios no incluidos</span>
+                            </div>
+                            <div style="font-size:10px; color:#4b5563; line-height:1.45; padding-left:8px; border-left:2px solid #E5B745; page-break-inside: avoid;">
+                                <t t-out="doc.x_not_included_services"/>
+                            </div>
+                        </t>
+                        <p style="margin-top:22px; padding-top:12px; border-top:1px solid #e5e7eb; color:#6b7280; font-size:9px; text-align:center;">
+                            Documento informativo generado desde Cotización personalizada · Wayki Trek · No constituye comprobante fiscal.
+                        </p>
+                    </div>
+                </t>
+            </t>
+            <t t-else="">
+                <div class="page">
+                    <p>No se encontró una cotización personalizada asociada a este presupuesto.</p>
+                </div>
+            </t>
+        </t>
+    </t>
+</t>
+""".strip()
+    existing = client.search_read(
+        "ir.ui.view",
+        domain=[["key", "=", "wtk.report_custom_quote_client_so"], ["type", "=", "qweb"]],
+        fields=["id"], limit=1,
+    )
+    vals = {
+        "name": "wtk.report_custom_quote_client_so",
+        "key": "wtk.report_custom_quote_client_so",
+        "type": "qweb",
+        "arch_db": arch_db,
+        "active": True,
+        "mode": "primary",
+    }
+    if existing:
+        client.write("ir.ui.view", [existing[0]["id"]], vals)
+        return existing[0]["id"]
+    return client.create("ir.ui.view", vals)
+
+def _upsert_so_client_report_action(client: OdooClient, so_model: dict) -> int:
+    existing = client.search_read(
+        "ir.actions.report",
+        domain=[["name", "=", "WTK - PDF Cotización cliente (SO)"], ["model", "=", "sale.order"]],
+        fields=["id"], limit=1,
+    )
+    vals = {
+        "name": "WTK - PDF Cotización cliente (SO)",
+        "model": "sale.order",
+        "report_type": "qweb-pdf",
+        "report_name": "wtk.report_custom_quote_client_so",
+        "report_file": "wtk.report_custom_quote_client_so",
+    }
+    if existing:
+        client.write("ir.actions.report", [existing[0]["id"]], vals)
+        return existing[0]["id"]
+    return client.create("ir.actions.report", vals)
+
 def run(client: OdooClient, wizard_model: dict):
     print("-> Configurando reportes (QWeb y Acciones PDF)...")
     _upsert_wizard_report_template(client)
@@ -562,7 +814,13 @@ def run(client: OdooClient, wizard_model: dict):
     _upsert_client_report_action(client, wizard_model)
     client_print_action_id = _upsert_client_print_action(client, wizard_model)
 
-    return print_action_id, client_print_action_id
+    _upsert_so_client_report_template(client)
+    so_model = _get_model(client, "sale.order")
+    _upsert_so_client_report_action(client, so_model)
+
+    save_action_id = _upsert_save_action(client, wizard_model)
+
+    return print_action_id, client_print_action_id, save_action_id
 
 if __name__ == "__main__":
     client = OdooClient()
