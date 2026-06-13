@@ -44,34 +44,72 @@ def main():
 
     # 3. Find parent view
     print("Searching for parent form view of 'product.template'...")
-    # First search for the standard product template common form
+    # Try to find the specific sales inherited form view first
     parent_views = client.search_read(
-        'ir.ui.view', 
-        domain=[['model', '=', 'product.template'], ['inherit_id', '=', False], ['type', '=', 'form']], 
+        'ir.ui.view',
+        domain=[['model', '=', 'product.template'], ['name', '=', 'product.template.form.inherit.sale'], ['type', '=', 'form']],
         fields=['id', 'name']
     )
-    if not parent_views:
-        # Fallback to any non-inherited view on product.template
+    
+    if parent_views:
+        parent_view_id = parent_views[0]['id']
+        print(f"Using inherited form view: {parent_views[0]['name']} (ID: {parent_view_id})")
+        arch_xml = f"""
+    <data>
+        <!-- Remove description_sale from its narrow half-width group -->
+        <xpath expr="//group[@name='sale_description']" position="replace"/>
+        <!-- Add both descriptions at page level for full width -->
+        <xpath expr="//page[@name='sales']/group[@name='sale']" position="after">
+            <group col="2" colspan="2" class="o_label_nowrap">
+                <group string="Descripción Corta" col="1">
+                    <field name="description_sale" nolabel="1" colspan="2" placeholder="This note will show up on sales orders."/>
+                </group>
+                <group string="Descripción para Web/Catálogo (Con Diseño)" col="1">
+                    <field name="{field_name}" widget="html" class="oe_sandbox" nolabel="1" colspan="2"/>
+                </group>
+            </group>
+        </xpath>
+    </data>
+    """
+    else:
+        # Fallback to the base common form
         parent_views = client.search_read(
             'ir.ui.view', 
-            domain=[['model', '=', 'product.template'], ['type', '=', 'form']], 
+            domain=[['model', '=', 'product.template'], ['inherit_id', '=', False], ['type', '=', 'form']], 
             fields=['id', 'name']
         )
-    if not parent_views:
-        raise RuntimeError("No se encontró ninguna vista de formulario para 'product.template'.")
-    
-    parent_view_id = parent_views[0]['id']
-    print(f"Using parent form view: {parent_views[0]['name']} (ID: {parent_view_id})")
+        if not parent_views:
+            parent_views = client.search_read(
+                'ir.ui.view', 
+                domain=[['model', '=', 'product.template'], ['type', '=', 'form']], 
+                fields=['id', 'name']
+            )
+        if not parent_views:
+            raise RuntimeError("No se encontró ninguna vista de formulario para 'product.template'.")
+            
+        parent_view_id = parent_views[0]['id']
+        print(f"Using base form view: {parent_views[0]['name']} (ID: {parent_view_id})")
+        
+        arch_xml = f"""
+    <data>
+        <!-- Remove description_sale from its narrow half-width group -->
+        <xpath expr="//group[@name='description']" position="replace"/>
+        <!-- Add both descriptions at page level for full width -->
+        <xpath expr="//page[@name='sales']/group[@name='sale']" position="after">
+            <group col="2" colspan="2" class="o_label_nowrap">
+                <group string="Descripción Corta" col="1">
+                    <field name="description_sale" nolabel="1" colspan="2" placeholder="This note will show up on sales orders."/>
+                </group>
+                <group string="Descripción para Web/Catálogo (Con Diseño)" col="1">
+                    <field name="{field_name}" widget="html" class="oe_sandbox" nolabel="1" colspan="2"/>
+                </group>
+            </group>
+        </xpath>
+    </data>
+    """
 
     # 4. Ensure inherited view to place the HTML field
     view_xml_id = 'product_template_form_inherit_sale_html'
-    arch_xml = f"""
-    <xpath expr="//field[@name='description_sale']" position="after">
-        <group string="Descripción para Web/Catálogo (Con Diseño)">
-            <field name="{field_name}" widget="html" class="oe_sandbox" nolabel="1" colspan="2"/>
-        </group>
-    </xpath>
-    """
 
     existing_views = client.search_read('ir.ui.view', domain=[['name', '=', view_xml_id]], fields=['id'])
     view_vals = {
