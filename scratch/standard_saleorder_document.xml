@@ -301,6 +301,9 @@
             </div>
             <div class="oe_structure"/>
 
+            <!-- Page break before service details section -->
+            <div style="page-break-before: always; break-before: page;"/>
+
             <!-- Service details and descriptions (Itineraries) -->
             <div id="product_descriptions" style="margin-top: 30px; page-break-inside: avoid;">
                 <t t-set="has_descriptions" t-value="any(not l.display_type and l.product_id and (l.product_id.x_description_sale_html or l.product_id.description_sale) for l in lines_to_report)"/>
