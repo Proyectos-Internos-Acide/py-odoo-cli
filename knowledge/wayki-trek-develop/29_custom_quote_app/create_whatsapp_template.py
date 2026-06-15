@@ -61,6 +61,7 @@ def create_template():
         "body": body,
         "status": "approved",
         "report_id": report_id,
+        "header_type": "document",
     }
     
     if existing:
