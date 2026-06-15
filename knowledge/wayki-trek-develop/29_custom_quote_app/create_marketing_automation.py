@@ -108,9 +108,14 @@ def create_marketing_campaign():
         m2_id = client.create("mailing.mailing", m2_vals)
         print(f"✅ Correo 2 '{mailing_2_subject}' creado (ID={m2_id}).")
 
-    # 3. Crear/Actualizar Campaña de Marketing
+    # 3. Crear/Actualizar Campaña de Marketing (Borrar si ya existe para restaurar a Borrador)
     campaign_name = "PRUEBA: Prueba de marketing"
     existing_camp = client.search_read("marketing.campaign", [["name", "=", campaign_name]], ["id"])
+    
+    if existing_camp:
+        camp_id = existing_camp[0]["id"]
+        print(f"-> Campaña existente '{campaign_name}' encontrada (ID={camp_id}). Eliminando para recrear en Borrador...")
+        client.execute("marketing.campaign", "unlink", [camp_id])
     
     # Filtro: leads en etapa "Seguimiento" (Stage ID = 12)
     campaign_domain = "[('stage_id', '=', 12)]"
@@ -120,16 +125,11 @@ def create_marketing_campaign():
         "model_id": model_id,
         "domain": campaign_domain,
         "active": True,
+        "state": "draft",
     }
     
-    if existing_camp:
-        camp_id = existing_camp[0]["id"]
-        client.write("marketing.campaign", [camp_id], camp_vals)
-        print(f"✅ Campaña '{campaign_name}' actualizada (ID={camp_id}).")
-    else:
-        camp_vals["state"] = "draft"
-        camp_id = client.create("marketing.campaign", camp_vals)
-        print(f"✅ Campaña '{campaign_name}' creada en Borrador (ID={camp_id}).")
+    camp_id = client.create("marketing.campaign", camp_vals)
+    print(f"✅ Campaña '{campaign_name}' recreada en Borrador (ID={camp_id}).")
 
     # 4. Crear Actividades de la Campaña
     # Eliminar actividades viejas para recrear y enlazar correctamente
