@@ -41,7 +41,7 @@ def create_marketing_campaign():
             
             <!-- Botón de acción -->
             <div style="text-align: center; margin: 30px 0;">
-                <a href="https://wa.me/51900000000" style="background-color: #20603D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; border: 1px solid #20603D;">
+                <a href="https://wa.me/51963038997" style="background-color: #20603D; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; border: 1px solid #20603D;">
                     Escríbenos por WhatsApp 💬
                 </a>
             </div>

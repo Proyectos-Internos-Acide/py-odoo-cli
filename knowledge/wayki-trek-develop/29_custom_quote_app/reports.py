@@ -374,32 +374,32 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                             </td>
                         </tr>
                     </table>
-                    <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:1px solid #d1d5db;">
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:none;">
                         <tr>
-                            <td style="padding:10px 12px; vertical-align:top; background:#fafafa;">
-                                <table style="width:100%; font-size:10px;">
+                            <td style="padding:10px 12px; vertical-align:top; background:#fafafa; border:none;">
+                                <table style="width:100%; font-size:10px; border:none;">
                                     <tr>
-                                        <td style="color:#6b7280; padding:2px 0; width:150px;">Nombre del Servicio</td>
-                                        <td style="font-weight:bold; color:#20603D;">
+                                        <td style="color:#6b7280; padding:4px 0; width:150px;">Nombre del Servicio</td>
+                                        <td style="font-weight:bold; color:#20603D; padding:4px 0;">
                                             <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
                                             <span t-else="">—</span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="color:#6b7280; padding:2px 0;">Tipo de servicio</td>
-                                        <td style="font-weight:bold;">
+                                        <td style="color:#6b7280; padding:4px 0;">Tipo de servicio</td>
+                                        <td style="font-weight:bold; padding:4px 0;">
                                             <span t-if="doc.x_service_type == 'private'">Privado</span>
                                             <span t-elif="doc.x_service_type == 'group'">Grupal</span>
                                             <span t-else="">—</span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td style="color:#6b7280; padding:2px 0;">Cantidad de pasajeros (PAX)</td>
-                                        <td style="font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                        <td style="color:#6b7280; padding:4px 0;">Cantidad de pasajeros (PAX)</td>
+                                        <td style="font-weight:bold; padding:4px 0;"><span t-field="doc.x_passenger_qty"/></td>
                                     </tr>
                                     <tr>
-                                        <td style="color:#6b7280; padding:2px 0;">Moneda</td>
-                                        <td style="font-weight:bold;"><span t-out="wiz_cur.display_name"/></td>
+                                        <td style="color:#6b7280; padding:4px 0;">Moneda</td>
+                                        <td style="font-weight:bold; padding:4px 0;"><span t-out="wiz_cur.display_name"/></td>
                                     </tr>
                                 </table>
                             </td>
@@ -447,14 +447,10 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                             </t>
                         </tbody>
                     </table>
-                    <table style="width:100%; margin-top:10px; margin-bottom:8px;">
-                        <tr>
-                            <td style="text-align:right; padding:8px 0;">
-                                <span style="font-size:11px; color:#374151;">Precio final:</span>
-                                <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="doc.x_final_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
-                            </td>
-                        </tr>
-                    </table>
+                    <div style="text-align:right; margin-top:10px; margin-bottom:8px; padding:8px 0;">
+                        <span style="font-size:11px; color:#374151;">Precio final:</span>
+                        <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="doc.x_final_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                    </div>
                     <t t-if="doc.x_not_included_services">
                         <div style="margin-top:20px; margin-bottom:12px; page-break-inside: avoid;">
                             <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Servicios no incluidos</span>
@@ -664,32 +660,32 @@ def _upsert_so_client_report_template(client: OdooClient) -> int:
                                 </td>
                             </tr>
                         </table>
-                        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:1px solid #d1d5db;">
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:none;">
                             <tr>
-                                <td style="padding:10px 12px; vertical-align:top; background:#fafafa;">
-                                    <table style="width:100%; font-size:10px;">
+                                <td style="padding:10px 12px; vertical-align:top; background:#fafafa; border:none;">
+                                    <table style="width:100%; font-size:10px; border:none;">
                                         <tr>
-                                            <td style="color:#6b7280; padding:2px 0; width:150px;">Nombre del Servicio</td>
-                                            <td style="font-weight:bold; color:#20603D;">
+                                            <td style="color:#6b7280; padding:4px 0; width:150px;">Nombre del Servicio</td>
+                                            <td style="font-weight:bold; color:#20603D; padding:4px 0;">
                                                 <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
                                                 <span t-else="">—</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:2px 0;">Tipo de servicio</td>
-                                            <td style="font-weight:bold;">
+                                            <td style="color:#6b7280; padding:4px 0;">Tipo de servicio</td>
+                                            <td style="font-weight:bold; padding:4px 0;">
                                                 <span t-if="doc.x_service_type == 'private'">Privado</span>
                                                 <span t-elif="doc.x_service_type == 'group'">Grupal</span>
                                                 <span t-else="">—</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:2px 0;">Cantidad de pasajeros (PAX)</td>
-                                            <td style="font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                            <td style="color:#6b7280; padding:4px 0;">Cantidad de pasajeros (PAX)</td>
+                                            <td style="font-weight:bold; padding:4px 0;"><span t-field="doc.x_passenger_qty"/></td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:2px 0;">Moneda</td>
-                                            <td style="font-weight:bold;"><span t-out="wiz_cur.display_name"/></td>
+                                            <td style="color:#6b7280; padding:4px 0;">Moneda</td>
+                                            <td style="font-weight:bold; padding:4px 0;"><span t-out="wiz_cur.display_name"/></td>
                                         </tr>
                                     </table>
                                 </td>
@@ -737,14 +733,10 @@ def _upsert_so_client_report_template(client: OdooClient) -> int:
                                 </t>
                             </tbody>
                         </table>
-                        <table style="width:100%; margin-top:10px; margin-bottom:8px;">
-                            <tr>
-                                <td style="text-align:right; padding:8px 0;">
-                                    <span style="font-size:11px; color:#374151;">Precio final:</span>
-                                    <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="doc.x_final_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
-                                </td>
-                            </tr>
-                        </table>
+                        <div style="text-align:right; margin-top:10px; margin-bottom:8px; padding:8px 0;">
+                            <span style="font-size:11px; color:#374151;">Precio final:</span>
+                            <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="doc.x_final_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                        </div>
                         <t t-if="doc.x_not_included_services">
                             <div style="margin-top:20px; margin-bottom:12px; page-break-inside: avoid;">
                                 <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Servicios no incluidos</span>
