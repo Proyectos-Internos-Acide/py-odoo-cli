@@ -649,9 +649,9 @@ def _upsert_so_client_report_template(client: OdooClient) -> int:
                 <t t-set="wiz_cur" t-value="so.currency_id if so.currency_id else env['res.currency'].search([('name','=','USD')], limit=1)"/>
                 <t t-call="web.external_layout">
                     <div class="page" style="font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color:#1a1a1a; font-size:11px; line-height:1.45;">
-                        <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:16px; border:none;">
                             <tr>
-                                <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff;">
+                                <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff; border:none;">
                                     <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">
                                         <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
                                         <span t-else="">Cotización personalizada</span>
@@ -663,29 +663,29 @@ def _upsert_so_client_report_template(client: OdooClient) -> int:
                         <table style="width:100%; border-collapse:collapse; margin-bottom:18px; border:none;">
                             <tr>
                                 <td style="padding:10px 12px; vertical-align:top; background:#fafafa; border:none;">
-                                    <table style="width:100%; font-size:10px; border:none;">
+                                    <table style="width:100%; font-size:10px; border:none; border-collapse:collapse;">
                                         <tr>
-                                            <td style="color:#6b7280; padding:4px 0; width:150px;">Nombre del Servicio</td>
-                                            <td style="font-weight:bold; color:#20603D; padding:4px 0;">
+                                            <td style="color:#6b7280; padding:4px 0; width:150px; border:none;">Nombre del Servicio</td>
+                                            <td style="font-weight:bold; color:#20603D; padding:4px 0; border:none;">
                                                 <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
                                                 <span t-else="">—</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:4px 0;">Tipo de servicio</td>
-                                            <td style="font-weight:bold; padding:4px 0;">
+                                            <td style="color:#6b7280; padding:4px 0; border:none;">Tipo de servicio</td>
+                                            <td style="font-weight:bold; padding:4px 0; border:none;">
                                                 <span t-if="doc.x_service_type == 'private'">Privado</span>
                                                 <span t-elif="doc.x_service_type == 'group'">Grupal</span>
                                                 <span t-else="">—</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:4px 0;">Cantidad de pasajeros (PAX)</td>
-                                            <td style="font-weight:bold; padding:4px 0;"><span t-field="doc.x_passenger_qty"/></td>
+                                            <td style="color:#6b7280; padding:4px 0; border:none;">Cantidad de pasajeros (PAX)</td>
+                                            <td style="font-weight:bold; padding:4px 0; border:none;"><span t-field="doc.x_passenger_qty"/></td>
                                         </tr>
                                         <tr>
-                                            <td style="color:#6b7280; padding:4px 0;">Moneda</td>
-                                            <td style="font-weight:bold; padding:4px 0;"><span t-out="wiz_cur.display_name"/></td>
+                                            <td style="color:#6b7280; padding:4px 0; border:none;">Moneda</td>
+                                            <td style="font-weight:bold; padding:4px 0; border:none;"><span t-out="wiz_cur.display_name"/></td>
                                         </tr>
                                     </table>
                                 </td>
