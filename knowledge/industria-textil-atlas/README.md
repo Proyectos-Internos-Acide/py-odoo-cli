@@ -51,7 +51,15 @@ El proyecto utiliza los almacenes reales preexistentes en la base de datos de Od
   python knowledge/industria-textil-atlas/verify_stock_and_partners.py
   ```
 
-### 4. Utilidades y Diagnóstico
+### 4. Generación de Órdenes de Venta (Ventas)
+* **Archivo:** [create_sales_data.py](file:///home/acide/py-odoo-cli/knowledge/industria-textil-atlas/create_sales_data.py)
+* **Descripción:** Genera presupuestos (cotizaciones) y los confirma como Pedidos de Venta (`sale.order`) en Odoo para los clientes peruanos creados previamente.
+* **Ejecución:**
+  ```bash
+  python knowledge/industria-textil-atlas/create_sales_data.py
+  ```
+
+### 5. Utilidades y Diagnóstico
 * [cleanup_warehouses.py](file:///home/acide/py-odoo-cli/knowledge/industria-textil-atlas/cleanup_warehouses.py) / [force_cleanup.py](file:///home/acide/py-odoo-cli/knowledge/industria-textil-atlas/force_cleanup.py): Scripts para aislar y renombrar/desactivar almacenes e ubicaciones obsoletas.
 * [make_products_storable.py](file:///home/acide/py-odoo-cli/knowledge/industria-textil-atlas/make_products_storable.py): Habilita el seguimiento físico de inventario para los productos del catálogo.
 
