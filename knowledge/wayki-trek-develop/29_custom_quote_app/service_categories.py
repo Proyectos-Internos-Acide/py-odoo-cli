@@ -257,37 +257,30 @@ if target_records:
 
 
 # ---------------------------------------------------------------------------
-# Template list view (for the management menu)
+# Generic list view + window action + menu helper
 # ---------------------------------------------------------------------------
 
-TEMPLATE_LIST_VIEW_NAME = "wtk.custom.service.template.list"
-TEMPLATE_ACTION_NAME = "WTK - Catálogo de Servicios"
-TEMPLATE_MENU_NAME = "Catálogo de Servicios"
+# parent: Ventas > Productos  (sale.menu_products)
+_PRODUCTS_PARENT_XMLID = ("sale", "menu_products")
 
 
-def _upsert_template_list_view(client: OdooClient, tmpl_model: dict) -> int:
-    arch_db = """
-<list string="Catálogo de servicios" multi_edit="1">
-    <field name="x_name" string="Nombre completo" readonly="1"/>
-    <field name="x_category_id" string="Categoría"/>
-    <field name="x_raw_name" string="Nombre del servicio"/>
-    <field name="x_service_type_id" string="Tipo"/>
-    <field name="x_capacity" string="Capacidad (PAX)"/>
-    <field name="x_price" string="Precio USD"/>
-</list>
-""".strip()
+def _get_sales_products_parent(client: OdooClient) -> int:
+    xml_rec = client.search_read(
+        "ir.model.data",
+        domain=[["module", "=", _PRODUCTS_PARENT_XMLID[0]], ["name", "=", _PRODUCTS_PARENT_XMLID[1]]],
+        fields=["res_id"], limit=1,
+    )
+    return xml_rec[0]["res_id"] if xml_rec else False
+
+
+def _upsert_list_view(client: OdooClient, model: dict, view_name: str, title: str, fields_xml: str) -> int:
+    arch_db = f'<list string="{title}" multi_edit="1">{fields_xml}</list>'
     existing = client.search_read(
         "ir.ui.view",
-        domain=[["name", "=", TEMPLATE_LIST_VIEW_NAME], ["model", "=", tmpl_model["model"]]],
+        domain=[["name", "=", view_name], ["model", "=", model["model"]]],
         fields=["id"], limit=1,
     )
-    vals = {
-        "name": TEMPLATE_LIST_VIEW_NAME,
-        "model": tmpl_model["model"],
-        "type": "list",
-        "arch_db": arch_db,
-        "active": True,
-    }
+    vals = {"name": view_name, "model": model["model"], "type": "list", "arch_db": arch_db, "active": True}
     if existing:
         vid = existing[0]["id"]
         client.write("ir.ui.view", [vid], vals)
@@ -295,19 +288,13 @@ def _upsert_template_list_view(client: OdooClient, tmpl_model: dict) -> int:
     return client.create("ir.ui.view", vals)
 
 
-def _upsert_template_window_action(client: OdooClient, tmpl_model: dict) -> int:
+def _upsert_window_action(client: OdooClient, model: dict, action_name: str) -> int:
     existing = client.search_read(
         "ir.actions.act_window",
-        domain=[["name", "=", TEMPLATE_ACTION_NAME], ["res_model", "=", tmpl_model["model"]]],
+        domain=[["name", "=", action_name], ["res_model", "=", model["model"]]],
         fields=["id"], limit=1,
     )
-    vals = {
-        "name": TEMPLATE_ACTION_NAME,
-        "res_model": tmpl_model["model"],
-        "view_mode": "list,form",
-        "target": "current",
-        "context": "{}",
-    }
+    vals = {"name": action_name, "res_model": model["model"], "view_mode": "list,form", "target": "current", "context": "{}"}
     if existing:
         aid = existing[0]["id"]
         client.write("ir.actions.act_window", [aid], vals)
@@ -315,34 +302,21 @@ def _upsert_template_window_action(client: OdooClient, tmpl_model: dict) -> int:
     return client.create("ir.actions.act_window", vals)
 
 
-def _upsert_template_menu(client: OdooClient, action_id: int) -> None:
-    # Resolve the parent menu via XML ID (stable across reinstalls)
-    xml_rec = client.search_read(
-        "ir.model.data",
-        domain=[["module", "=", TEMPLATE_MENU_PARENT_XMLID[0]], ["name", "=", TEMPLATE_MENU_PARENT_XMLID[1]]],
-        fields=["res_id"], limit=1,
-    )
-    parent_id = xml_rec[0]["res_id"] if xml_rec else False
-
+def _upsert_menu(client: OdooClient, menu_name: str, action_id: int, parent_id: int, sequence: int) -> None:
     existing = client.search_read(
         "ir.ui.menu",
-        domain=[["name", "=", TEMPLATE_MENU_NAME]],
+        domain=[["name", "=", menu_name]],
         fields=["id"], limit=1,
     )
-    vals = {
-        "name": TEMPLATE_MENU_NAME,
-        "action": f"ir.actions.act_window,{action_id}",
-        "active": True,
-        "sequence": 30,
-    }
+    vals = {"name": menu_name, "action": f"ir.actions.act_window,{action_id}", "active": True, "sequence": sequence}
     if parent_id:
         vals["parent_id"] = parent_id
     if existing:
         client.write("ir.ui.menu", [existing[0]["id"]], vals)
-        print(f"   Menú '{TEMPLATE_MENU_NAME}' actualizado (id={existing[0]['id']}).")
+        print(f"   Menú '{menu_name}' actualizado (id={existing[0]['id']}).")
     else:
         mid = client.create("ir.ui.menu", vals)
-        print(f"   Menú '{TEMPLATE_MENU_NAME}' creado (id={mid}).")
+        print(f"   Menú '{menu_name}' creado (id={mid}).")
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +325,9 @@ def _upsert_template_menu(client: OdooClient, action_id: int) -> None:
 
 def run(client: OdooClient) -> None:
     print("-> Configurando Categorías, Tipos y Plantillas de Servicio...")
+
+    # Resolve parent menu once
+    products_parent_id = _get_sales_products_parent(client)
 
     # 1. Category model
     cat_model = _ensure_simple_model(client, CATEGORY_MODEL, CATEGORY_MODEL_NAME)
@@ -362,6 +339,13 @@ def run(client: OdooClient) -> None:
         title="Categoría de servicio",
         placeholder="Ej. Transporte, Alojamiento, Guía",
     )
+    _upsert_list_view(
+        client, cat_model, "wtk.service.category.list",
+        "Categorías de servicio",
+        '<field name="x_name" string="Nombre de categoría"/>',
+    )
+    cat_action_id = _upsert_window_action(client, cat_model, "WTK - Categorías de servicio")
+    _upsert_menu(client, "Categorías de servicio", cat_action_id, products_parent_id, sequence=31)
 
     # 2. Type model
     type_model = _ensure_simple_model(client, TYPE_MODEL, TYPE_MODEL_NAME)
@@ -373,6 +357,13 @@ def run(client: OdooClient) -> None:
         title="Tipo de servicio",
         placeholder="Ej. Ejecutivo, Turista, Privado, Grupal",
     )
+    _upsert_list_view(
+        client, type_model, "wtk.service.type.list",
+        "Tipos de servicio",
+        '<field name="x_name" string="Nombre de tipo"/>',
+    )
+    type_action_id = _upsert_window_action(client, type_model, "WTK - Tipos de servicio")
+    _upsert_menu(client, "Tipos de servicio", type_action_id, products_parent_id, sequence=32)
 
     # 3. Service template fields
     tmpl_model = _get_model(client, WIZ_SERVICE_TEMPLATE_MODEL)
@@ -386,11 +377,20 @@ def run(client: OdooClient) -> None:
     _upsert_template_form_view(client, tmpl_model)
     print("   Vista del formulario de plantilla actualizada.")
 
-    # 5. Template list view + action + menu
-    _upsert_template_list_view(client, tmpl_model)
-    action_id = _upsert_template_window_action(client, tmpl_model)
-    _upsert_template_menu(client, action_id)
-    print("   Vista de lista y menú de gestión configurados.")
+    # 5. Template list view + action + menu (Servicios Incluidos)
+    _upsert_list_view(
+        client, tmpl_model, "wtk.custom.service.template.list",
+        "Catálogo de servicios",
+        '<field name="x_name" string="Nombre completo" readonly="1"/>'
+        '<field name="x_category_id" string="Categoría"/>'
+        '<field name="x_raw_name" string="Nombre del servicio"/>'
+        '<field name="x_service_type_id" string="Tipo"/>'
+        '<field name="x_capacity" string="Capacidad (PAX)"/>'
+        '<field name="x_price" string="Precio USD"/>',
+    )
+    tmpl_action_id = _upsert_window_action(client, tmpl_model, "WTK - Catálogo de Servicios")
+    _upsert_menu(client, "Servicios Incluidos", tmpl_action_id, products_parent_id, sequence=30)
+    print("   Vistas de lista y menús configurados.")
 
     # 6. Automation
     _upsert_name_compose_automation(client, tmpl_model)
