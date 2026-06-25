@@ -257,6 +257,95 @@ if target_records:
 
 
 # ---------------------------------------------------------------------------
+# Template list view (for the management menu)
+# ---------------------------------------------------------------------------
+
+TEMPLATE_LIST_VIEW_NAME = "wtk.custom.service.template.list"
+TEMPLATE_ACTION_NAME = "WTK - Catálogo de Servicios"
+TEMPLATE_MENU_NAME = "Catálogo de Servicios"
+
+
+def _upsert_template_list_view(client: OdooClient, tmpl_model: dict) -> int:
+    arch_db = """
+<list string="Catálogo de servicios" multi_edit="1">
+    <field name="x_name" string="Nombre completo" readonly="1"/>
+    <field name="x_category_id" string="Categoría"/>
+    <field name="x_raw_name" string="Nombre del servicio"/>
+    <field name="x_service_type_id" string="Tipo"/>
+    <field name="x_capacity" string="Capacidad (PAX)"/>
+    <field name="x_price" string="Precio USD"/>
+</list>
+""".strip()
+    existing = client.search_read(
+        "ir.ui.view",
+        domain=[["name", "=", TEMPLATE_LIST_VIEW_NAME], ["model", "=", tmpl_model["model"]]],
+        fields=["id"], limit=1,
+    )
+    vals = {
+        "name": TEMPLATE_LIST_VIEW_NAME,
+        "model": tmpl_model["model"],
+        "type": "list",
+        "arch_db": arch_db,
+        "active": True,
+    }
+    if existing:
+        vid = existing[0]["id"]
+        client.write("ir.ui.view", [vid], vals)
+        return vid
+    return client.create("ir.ui.view", vals)
+
+
+def _upsert_template_window_action(client: OdooClient, tmpl_model: dict) -> int:
+    existing = client.search_read(
+        "ir.actions.act_window",
+        domain=[["name", "=", TEMPLATE_ACTION_NAME], ["res_model", "=", tmpl_model["model"]]],
+        fields=["id"], limit=1,
+    )
+    vals = {
+        "name": TEMPLATE_ACTION_NAME,
+        "res_model": tmpl_model["model"],
+        "view_mode": "list,form",
+        "target": "current",
+        "context": "{}",
+    }
+    if existing:
+        aid = existing[0]["id"]
+        client.write("ir.actions.act_window", [aid], vals)
+        return aid
+    return client.create("ir.actions.act_window", vals)
+
+
+def _upsert_template_menu(client: OdooClient, action_id: int) -> None:
+    # Resolve the parent menu via XML ID (stable across reinstalls)
+    xml_rec = client.search_read(
+        "ir.model.data",
+        domain=[["module", "=", TEMPLATE_MENU_PARENT_XMLID[0]], ["name", "=", TEMPLATE_MENU_PARENT_XMLID[1]]],
+        fields=["res_id"], limit=1,
+    )
+    parent_id = xml_rec[0]["res_id"] if xml_rec else False
+
+    existing = client.search_read(
+        "ir.ui.menu",
+        domain=[["name", "=", TEMPLATE_MENU_NAME]],
+        fields=["id"], limit=1,
+    )
+    vals = {
+        "name": TEMPLATE_MENU_NAME,
+        "action": f"ir.actions.act_window,{action_id}",
+        "active": True,
+        "sequence": 30,
+    }
+    if parent_id:
+        vals["parent_id"] = parent_id
+    if existing:
+        client.write("ir.ui.menu", [existing[0]["id"]], vals)
+        print(f"   Menú '{TEMPLATE_MENU_NAME}' actualizado (id={existing[0]['id']}).")
+    else:
+        mid = client.create("ir.ui.menu", vals)
+        print(f"   Menú '{TEMPLATE_MENU_NAME}' creado (id={mid}).")
+
+
+# ---------------------------------------------------------------------------
 # Main entry
 # ---------------------------------------------------------------------------
 
@@ -285,7 +374,7 @@ def run(client: OdooClient) -> None:
         placeholder="Ej. Ejecutivo, Turista, Privado, Grupal",
     )
 
-    # 3. Service template: new fields
+    # 3. Service template fields
     tmpl_model = _get_model(client, WIZ_SERVICE_TEMPLATE_MODEL)
     _ensure_field(client, tmpl_model, "x_category_id", "Categoría", "many2one", relation=CATEGORY_MODEL)
     _ensure_field(client, tmpl_model, "x_raw_name", "Nombre descriptivo del servicio", "char")
@@ -293,11 +382,17 @@ def run(client: OdooClient) -> None:
     _ensure_field(client, tmpl_model, "x_capacity", "Capacidad (PAX)", "integer")
     print("   Campos añadidos a la plantilla de servicio.")
 
-    # 4. Update template form view
+    # 4. Template form view (Buscar/Crear modal)
     _upsert_template_form_view(client, tmpl_model)
     print("   Vista del formulario de plantilla actualizada.")
 
-    # 5. Automation
+    # 5. Template list view + action + menu
+    _upsert_template_list_view(client, tmpl_model)
+    action_id = _upsert_template_window_action(client, tmpl_model)
+    _upsert_template_menu(client, action_id)
+    print("   Vista de lista y menú de gestión configurados.")
+
+    # 6. Automation
     _upsert_name_compose_automation(client, tmpl_model)
     print("   Automatización de composición de nombre actualizada.")
 

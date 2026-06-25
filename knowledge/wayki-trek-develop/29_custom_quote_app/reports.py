@@ -91,7 +91,14 @@ def _upsert_wizard_report_template(client: OdooClient) -> int:
                                                     </span>
                                                 </td>
                                                 <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
-                                                    <span t-field="svc.x_name"/>
+                                                    <t t-if="svc.x_template_id and svc.x_template_id.x_raw_name">
+                                                        <t t-set="_cat" t-value="svc.x_template_id.x_category_id.x_name if svc.x_template_id.x_category_id else ''"/>
+                                                        <t t-set="_raw" t-value="svc.x_template_id.x_raw_name"/>
+                                                        <span t-out="(_cat + ' - ' + _raw) if _cat else _raw"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span t-field="svc.x_name"/>
+                                                    </t>
                                                 </td>
                                                 <td style="text-align:right; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
                                                     <span t-out="svc_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
@@ -429,7 +436,16 @@ def _upsert_client_report_template(client: OdooClient) -> int:
                                         </td>
                                         <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
                                             <t t-if="line.x_service_line_ids">
-                                                <span t-out="', '.join(line.x_service_line_ids.mapped('x_name'))"/>
+                                                <t t-foreach="line.x_service_line_ids" t-as="svc">
+                                                    <t t-if="svc.x_template_id and svc.x_template_id.x_raw_name">
+                                                        <t t-set="_cat" t-value="svc.x_template_id.x_category_id.x_name if svc.x_template_id.x_category_id else ''"/>
+                                                        <t t-set="_raw" t-value="svc.x_template_id.x_raw_name"/>
+                                                        <div t-out="(_cat + ' - ' + _raw) if _cat else _raw"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <div t-out="svc.x_name or ''"/>
+                                                    </t>
+                                                </t>
                                             </t>
                                             <t t-else="">
                                                 <span style="color:#9ca3af; font-style:italic;">Sin servicios incluidos</span>
@@ -704,7 +720,16 @@ def _upsert_so_client_report_template(client: OdooClient) -> int:
                                             </td>
                                             <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
                                                 <t t-if="line.x_service_line_ids">
-                                                    <span t-out="', '.join(line.x_service_line_ids.mapped('x_name'))"/>
+                                                    <t t-foreach="line.x_service_line_ids" t-as="svc">
+                                                        <t t-if="svc.x_template_id and svc.x_template_id.x_raw_name">
+                                                            <t t-set="_cat" t-value="svc.x_template_id.x_category_id.x_name if svc.x_template_id.x_category_id else ''"/>
+                                                            <t t-set="_raw" t-value="svc.x_template_id.x_raw_name"/>
+                                                            <div t-out="(_cat + ' - ' + _raw) if _cat else _raw"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <div t-out="svc.x_name or ''"/>
+                                                        </t>
+                                                    </t>
                                                 </t>
                                                 <t t-else="">
                                                     <span style="color:#9ca3af; font-style:italic;">Sin servicios incluidos</span>
