@@ -11,19 +11,28 @@ from constants import WIZ_SERVICE_TEMPLATE_MODEL, _get_model
 CATEGORY_MODEL = "x_wtk_service_category"
 CATEGORY_MODEL_NAME = "WTK Service Category"
 CATEGORY_VIEW_NAME = "wtk.service.category.form"
+
+TYPE_MODEL = "x_wtk_service_type"
+TYPE_MODEL_NAME = "WTK Service Type"
+TYPE_VIEW_NAME = "wtk.service.type.form"
+
 TEMPLATE_VIEW_NAME = "wtk.custom.service.template.form"
 
 
-def _ensure_category_model(client: OdooClient) -> dict:
-    rec = _get_model(client, CATEGORY_MODEL)
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _ensure_simple_model(client: OdooClient, model: str, name: str) -> dict:
+    rec = _get_model(client, model)
     if rec:
         return rec
     model_id = client.create("ir.model", {
-        "name": CATEGORY_MODEL_NAME,
-        "model": CATEGORY_MODEL,
+        "name": name,
+        "model": model,
         "state": "manual",
     })
-    return {"id": model_id, "model": CATEGORY_MODEL, "name": CATEGORY_MODEL_NAME}
+    return {"id": model_id, "model": model, "name": name}
 
 
 def _ensure_field(client, model, name, desc, ttype, relation=None):
@@ -68,24 +77,34 @@ def _ensure_acl(client: OdooClient, model: dict) -> None:
         client.create("ir.model.access", vals)
 
 
-def _upsert_category_form_view(client: OdooClient, cat_model: dict) -> int:
-    arch_db = """
-<form string="Categoría de servicio">
+# ---------------------------------------------------------------------------
+# Form views for lookup models (shown when quick-creating)
+# ---------------------------------------------------------------------------
+
+def _upsert_simple_form_view(
+    client: OdooClient,
+    view_name: str,
+    model: dict,
+    title: str,
+    placeholder: str,
+) -> int:
+    arch_db = f"""
+<form string="{title}">
     <sheet>
         <group>
-            <field name="x_name" string="Nombre de categoría" placeholder="Ej. Transporte, Alojamiento, Guía"/>
+            <field name="x_name" string="{title}" placeholder="{placeholder}"/>
         </group>
     </sheet>
 </form>
 """.strip()
     existing = client.search_read(
         "ir.ui.view",
-        domain=[["name", "=", CATEGORY_VIEW_NAME], ["model", "=", cat_model["model"]]],
+        domain=[["name", "=", view_name], ["model", "=", model["model"]]],
         fields=["id"], limit=1,
     )
     vals = {
-        "name": CATEGORY_VIEW_NAME,
-        "model": cat_model["model"],
+        "name": view_name,
+        "model": model["model"],
         "type": "form",
         "arch_db": arch_db,
         "active": True,
@@ -97,29 +116,44 @@ def _upsert_category_form_view(client: OdooClient, cat_model: dict) -> int:
     return client.create("ir.ui.view", vals)
 
 
+# ---------------------------------------------------------------------------
+# Service Template form view
+# ---------------------------------------------------------------------------
+
 def _upsert_template_form_view(client: OdooClient, tmpl_model: dict) -> int:
     """
-    Overrides the form view of x_wtk_custom_service_template to show:
-      - Categoría (x_category_id) — Many2one with quick create
-      - Nombre del servicio (x_raw_name) — descriptive input
-      - Precio por defecto (x_price)
-    The x_name field is hidden (composed automatically).
+    Form view for x_wtk_custom_service_template showing:
+      - Categoría       (x_category_id)   — Many2one with quick create
+      - Nombre          (x_raw_name)       — descriptive input
+      - Tipo            (x_service_type_id)— Many2one with quick create
+      - Capacidad       (x_capacity)       — integer  (N PAX)
+      - Precio default  (x_price)
+    x_name is hidden and auto-composed.
     """
-    arch_db = f"""
+    arch_db = """
 <form string="Crear Servicio (Buscar/Crear)">
     <sheet>
         <div class="alert alert-success" role="alert" style="margin-bottom:12px;">
             <strong>🟩 Nuevo servicio para el catálogo</strong><br/>
             Se guardará como plantilla reutilizable en todas las cotizaciones
         </div>
-        <group>
+        <group col="2">
             <field name="x_category_id"
                    string="Categoría"
                    placeholder="Ej. Transporte, Alojamiento..."
-                   options="{{'create_name_field': 'x_name', 'quick_create': True}}"/>
+                   options="{'quick_create': True}"/>
             <field name="x_raw_name"
                    string="Nombre del servicio"
                    placeholder="Ej. Tren Vistadome ida y vuelta"/>
+            <field name="x_service_type_id"
+                   string="Tipo"
+                   placeholder="Ej. Ejecutivo, Turista, Privado..."
+                   options="{'quick_create': True}"/>
+            <field name="x_capacity"
+                   string="Capacidad (PAX)"
+                   placeholder="Ej. 4"/>
+        </group>
+        <group col="1">
             <field name="x_price" string="Precio por defecto (USD)"/>
         </group>
         <field name="x_name" invisible="1"/>
@@ -145,24 +179,28 @@ def _upsert_template_form_view(client: OdooClient, tmpl_model: dict) -> int:
     return client.create("ir.ui.view", vals)
 
 
+# ---------------------------------------------------------------------------
+# Name composition automation
+# Format: "Categoría - Nombre del servicio - Tipo - N PAX"
+# ---------------------------------------------------------------------------
+
 def _upsert_name_compose_automation(client: OdooClient, tmpl_model: dict) -> None:
-    """
-    When x_category_id or x_raw_name changes on the service template,
-    auto-compose x_name = "Category - raw_name".
-    """
     action_name = "WTK - Componer nombre de plantilla de servicio"
     action_code = """
 target_records = records or record
 if target_records:
     for rec in target_records:
-        cat_name = rec.x_category_id.x_name if rec.x_category_id else ''
-        raw = rec.x_raw_name or ''
-        if cat_name and raw:
-            composed = cat_name + ' - ' + raw
-        elif cat_name:
-            composed = cat_name
-        else:
-            composed = raw
+        parts = []
+        if rec.x_category_id and rec.x_category_id.x_name:
+            parts.append(rec.x_category_id.x_name)
+        if rec.x_raw_name:
+            parts.append(rec.x_raw_name)
+        if rec.x_service_type_id and rec.x_service_type_id.x_name:
+            parts.append(rec.x_service_type_id.x_name)
+        cap = rec.x_capacity
+        if cap and cap > 0:
+            parts.append(str(int(cap)) + ' PAX')
+        composed = ' - '.join(parts)
         if composed != (rec.x_name or ''):
             rec.write({'x_name': composed})
 """.strip()
@@ -184,9 +222,13 @@ if target_records:
     else:
         action_id = client.create("ir.actions.server", action_vals)
 
+    # Watch all four composing fields
     field_recs = client.search_read(
         "ir.model.fields",
-        domain=[["model", "=", WIZ_SERVICE_TEMPLATE_MODEL], ["name", "in", ["x_category_id", "x_raw_name"]]],
+        domain=[
+            ["model", "=", WIZ_SERVICE_TEMPLATE_MODEL],
+            ["name", "in", ["x_category_id", "x_raw_name", "x_service_type_id", "x_capacity"]],
+        ],
         fields=["id"], limit=10,
     )
     field_ids = [r["id"] for r in field_recs]
@@ -214,38 +256,52 @@ if target_records:
         client.create("base.automation", automation_vals)
 
 
+# ---------------------------------------------------------------------------
+# Main entry
+# ---------------------------------------------------------------------------
+
 def run(client: OdooClient) -> None:
-    print("-> Configurando Categorías de Servicio y Plantillas mejoradas...")
+    print("-> Configurando Categorías, Tipos y Plantillas de Servicio...")
 
-    # 1. Ensure category model exists
-    cat_model = _ensure_category_model(client)
-    print(f"   Modelo de categoría: {cat_model['model']} (id={cat_model['id']})")
-
-    # 2. Ensure x_name field on category
+    # 1. Category model
+    cat_model = _ensure_simple_model(client, CATEGORY_MODEL, CATEGORY_MODEL_NAME)
+    print(f"   Categoría: {cat_model['model']} (id={cat_model['id']})")
     _ensure_field(client, cat_model, "x_name", "Nombre de categoría", "char")
-
-    # 3. ACL for category model
     _ensure_acl(client, cat_model)
+    _upsert_simple_form_view(
+        client, CATEGORY_VIEW_NAME, cat_model,
+        title="Categoría de servicio",
+        placeholder="Ej. Transporte, Alojamiento, Guía",
+    )
 
-    # 4. Form view for category (used when quick-creating a new category)
-    _upsert_category_form_view(client, cat_model)
-    print("   Vista de categoría configurada.")
+    # 2. Type model
+    type_model = _ensure_simple_model(client, TYPE_MODEL, TYPE_MODEL_NAME)
+    print(f"   Tipo: {type_model['model']} (id={type_model['id']})")
+    _ensure_field(client, type_model, "x_name", "Nombre de tipo", "char")
+    _ensure_acl(client, type_model)
+    _upsert_simple_form_view(
+        client, TYPE_VIEW_NAME, type_model,
+        title="Tipo de servicio",
+        placeholder="Ej. Ejecutivo, Turista, Privado, Grupal",
+    )
 
-    # 5. Add fields to service template
+    # 3. Service template: new fields
     tmpl_model = _get_model(client, WIZ_SERVICE_TEMPLATE_MODEL)
     _ensure_field(client, tmpl_model, "x_category_id", "Categoría", "many2one", relation=CATEGORY_MODEL)
     _ensure_field(client, tmpl_model, "x_raw_name", "Nombre descriptivo del servicio", "char")
-    print("   Campos x_category_id y x_raw_name añadidos a la plantilla.")
+    _ensure_field(client, tmpl_model, "x_service_type_id", "Tipo de servicio", "many2one", relation=TYPE_MODEL)
+    _ensure_field(client, tmpl_model, "x_capacity", "Capacidad (PAX)", "integer")
+    print("   Campos añadidos a la plantilla de servicio.")
 
-    # 6. Custom form view for service template
+    # 4. Update template form view
     _upsert_template_form_view(client, tmpl_model)
     print("   Vista del formulario de plantilla actualizada.")
 
-    # 7. Automation to compose x_name
+    # 5. Automation
     _upsert_name_compose_automation(client, tmpl_model)
-    print("   Automatización de composición de nombre configurada.")
+    print("   Automatización de composición de nombre actualizada.")
 
-    print("✅ Categorías y plantillas de servicio listas.")
+    print("✅ Listo.")
 
 
 if __name__ == "__main__":
