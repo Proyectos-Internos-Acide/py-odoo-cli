@@ -57,7 +57,6 @@ action_code = r"""if record.email_from:
     mail = env['mail.mail'].create({
         'subject': record.name,
         'email_from': email_from,
-        'email_to': record.email_from,
         'body_html': cuerpo_html,
         'body': cuerpo_html,
         'model': 'crm.lead',
