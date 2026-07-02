@@ -50,14 +50,16 @@ action_code = r"""if record.email_from:
         'El equipo de Wayki Trek',
     ]
     cuerpo_texto = '\n'.join(lineas)
-
     cuerpo_html = '<pre style="font-family: Arial, sans-serif; font-size:14px; white-space: pre-wrap;">' + cuerpo_texto + '</pre>'
 
+    # body_html -> para el email SMTP (lo que llega al cliente)
+    # body      -> para el Chatter de Odoo (lo que se muestra en el historial)
     mail = env['mail.mail'].create({
         'subject': record.name,
         'email_from': email_from,
         'email_to': record.email_from,
         'body_html': cuerpo_html,
+        'body': cuerpo_html,
         'model': 'crm.lead',
         'res_id': record.id,
         'recipient_ids': [(4, partner.id)],
@@ -66,4 +68,4 @@ action_code = r"""if record.email_from:
 """
 
 client.write('ir.actions.server', [643], {'code': action_code.strip()})
-print('Accion 643 actualizada: strip HTML manual sin re, cuerpo en pre tag.')
+print('Accion 643 actualizada: body Y body_html correctamente configurados.')
