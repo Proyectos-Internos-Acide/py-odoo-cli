@@ -7,14 +7,15 @@ from odoo_cli import OdooClient
 def main():
     client = OdooClient()
     client.connect()
-    print("--- Fetching root menus (parent_id = False) ---")
-    menus = client.search_read(
+    print("--- Fetching menu 127 (Invoicing) fields ---")
+    menu = client.search_read(
         'ir.ui.menu',
-        [('parent_id', '=', False)],
-        fields=['id', 'name', 'xmlid', 'complete_name']
+        [('id', '=', 127)],
+        limit=1
     )
-    for m in menus:
-        print(f"ID: {m['id']} | Name: {m['name']} | XMLID: {m.get('xmlid')} | Complete Name: {m.get('complete_name')}")
+    if menu:
+        for k, v in menu[0].items():
+            print(f"{k}: {v}")
 
 if __name__ == '__main__':
     main()
