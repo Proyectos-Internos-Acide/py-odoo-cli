@@ -5,15 +5,41 @@ Este manual ha sido diseñado para explicar de manera sencilla y clara qué info
 ---
 
 ## 1. Tablero de Ventas (Sales)
-Este tablero es el centro principal para ver cuánto dinero está ingresando a la empresa a través de las ventas de paquetes y tours.
+Este tablero es el centro principal para evaluar el desempeño comercial de la empresa. Toda la información que se observa aquí está filtrada por un periodo de tiempo (por defecto muestra los **"Últimos 90 días"**, como se ve en la esquina superior derecha).
 
-**¿De dónde se extrae la información?**
-Toda la información proviene del módulo de **Ventas** de Odoo. Se alimenta automáticamente cada vez que un vendedor crea una "Cotización" (un presupuesto para un cliente) y cuando esta cotización es aceptada y se convierte en una "Orden de Venta" oficial.
+**¿De dónde se extrae la información general?**
+Absolutamente todos los datos de esta pantalla provienen del módulo de **Ventas** de Odoo. El sistema lee las Cotizaciones (presupuestos) y las Órdenes de Venta (ventas confirmadas) que el equipo comercial registra en el día a día.
 
-**¿Qué muestra este tablero?**
-* **Cuadros superiores (Métricas rápidas):** Te muestra rápidamente cuántas cotizaciones se han hecho en total, cuántas ventas se han confirmado, el dinero total que ha ingresado y el valor promedio que gasta cada cliente en una compra.
-* **Ventas mensuales (Gráfico de líneas):** Te permite ver cómo han subido o bajado las ventas a lo largo de los meses. Es ideal para identificar las temporadas altas o bajas del año.
-* **Mejores cotizaciones y Órdenes de venta principales (Tablas inferiores):** Es un ranking en tiempo real. Te dice exactamente qué clientes están comprando más (o están a punto de comprar) y qué vendedor de tu equipo está cerrando esos tratos.
+### Análisis detallado de lo que se ve en pantalla:
+
+#### A. Tarjetas de Indicadores Principales (KPIs superiores)
+Son los 4 bloques ubicados en la parte superior. Nos dan la "fotografía" rápida del negocio. En la imagen vemos que todos tienen un texto verde (↑∞% desde el último periodo), lo que indica que hay un crecimiento positivo en comparación con los 90 días anteriores.
+1. **Cotizaciones (5):** 
+   - *Qué significa:* Se han creado y enviado 5 presupuestos a clientes potenciales. 
+   - *De dónde sale:* Cuenta cuántos documentos en el módulo de Ventas están en estado "Presupuesto" o "Cotización enviada".
+2. **Confirmados (5):** 
+   - *Qué significa:* De todas las cotizaciones, 5 ya han sido aceptadas por el cliente.
+   - *De dónde sale:* Cuenta cuántos documentos pasaron al estado "Orden de Venta" (venta cerrada).
+3. **Ingreso ($14.859):** 
+   - *Qué significa:* Es el dinero total que la empresa ha generado o va a recibir por esas 5 ventas confirmadas.
+   - *De dónde sale:* Es la suma del total de dinero de las Órdenes de Venta.
+4. **Orden promedio ($2.972):** 
+   - *Qué significa:* En promedio, cada vez que un cliente nos compra, gasta cerca de 3 mil dólares.
+   - *De dónde sale:* Se calcula dividiendo el "Ingreso" ($14.859) entre el número de ventas "Confirmadas" (5). Es un indicador clave para saber si estamos vendiendo tours caros o baratos.
+
+#### B. Gráfico Central: "Ventas mensuales"
+- *Qué muestra:* Es un gráfico de líneas (aunque en la imagen solo haya un punto azul por ahora). En el eje inferior (horizontal) vemos el mes **"Julio 2026"**, y en el eje lateral (vertical) vemos el **"Revenue"** (Ingresos) que va desde 0 hasta 16.000.
+- *De dónde sale:* Toma el total de ventas (Ingreso) y lo divide por meses. El punto azul está casi llegando a la línea de 15.000, lo que coincide exactamente con nuestro Ingreso total de $14.859. Con el paso de los meses, este punto formará una línea para ver si las ventas suben o bajan.
+
+#### C. Tablas Inferiores (Rankings)
+En la parte de abajo vemos dos listas detalladas que nos ayudan a entender exactamente quién está comprando y quién está vendiendo. Ambas tablas muestran el correo o nombre del Cliente, el Vendedor responsable y el Ingreso generado.
+
+1. **Mejores cotizaciones (Izquierda):**
+   - *Qué muestra:* Las 5 cotizaciones (presupuestos) con los montos de dinero más altos que están actualmente en proceso. Vemos correos como "waykitrek.transportes@gmail.com" con montos desde $289 hasta $3,582. 
+   - *De dónde sale:* El sistema revisa los documentos en estado "Presupuesto", los ordena del más caro al más barato y muestra el Top 5. El vendedor estrella aquí es "Amaru Cusi", quien está manejando todas estas grandes cotizaciones.
+2. **Órdenes de venta principales (Derecha):**
+   - *Qué muestra:* Las 5 ventas **ya cerradas** más grandes de la empresa. Aquí vemos una venta gigantesca de $11,360 al cliente "contactorogerls@gmail.com", liderada por el vendedor Amaru Cusi. También vemos ventas de "Carlos Fernandez" y "Américo Aguilar" manejadas por Leo Cusi.
+   - *De dónde sale:* El sistema revisa los documentos en estado "Orden de Venta", los ordena de mayor a menor y extrae a los mejores 5 clientes.
 
 ![Tablero de Ventas](./screenshots/tablero_5_sales.png)
 
