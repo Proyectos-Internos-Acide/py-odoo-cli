@@ -5,41 +5,44 @@ Este manual ha sido diseñado para explicar de manera sencilla y clara qué info
 ---
 
 ## 1. Tablero de Ventas (Sales)
-Este tablero es el centro principal para evaluar el desempeño comercial de la empresa. Toda la información que se observa aquí está filtrada por un periodo de tiempo (por defecto muestra los **"Últimos 90 días"**, como se ve en la esquina superior derecha).
+Este tablero es el centro principal para evaluar el desempeño comercial de la empresa. La información se actualiza dinámicamente y puede ser filtrada por distintos periodos de tiempo (por defecto "Últimos 90 días").
 
 **¿De dónde se extrae la información general?**
-Absolutamente todos los datos de esta pantalla provienen del módulo de **Ventas** de Odoo. El sistema lee las Cotizaciones (presupuestos) y las Órdenes de Venta (ventas confirmadas) que el equipo comercial registra en el día a día.
+Toda la data de esta pantalla proviene del módulo de **Ventas** de Odoo. Se alimenta automáticamente de los presupuestos (Cotizaciones) y de las ventas confirmadas (Órdenes de Venta) gestionadas por el equipo comercial.
 
-### Análisis detallado de lo que se ve en pantalla:
+### Análisis de las métricas y gráficos disponibles:
 
-#### A. Tarjetas de Indicadores Principales (KPIs superiores)
-Son los 4 bloques ubicados en la parte superior. Nos dan la "fotografía" rápida del negocio. En la imagen vemos que todos tienen un texto verde (↑∞% desde el último periodo), lo que indica que hay un crecimiento positivo en comparación con los 90 días anteriores.
-1. **Cotizaciones (5):** 
-   - *Qué significa:* Se han creado y enviado 5 presupuestos a clientes potenciales. 
-   - *De dónde sale:* Cuenta cuántos documentos en el módulo de Ventas están en estado "Presupuesto" o "Cotización enviada".
-2. **Confirmados (5):** 
-   - *Qué significa:* De todas las cotizaciones, 5 ya han sido aceptadas por el cliente.
-   - *De dónde sale:* Cuenta cuántos documentos pasaron al estado "Orden de Venta" (venta cerrada).
-3. **Ingreso ($14.859):** 
-   - *Qué significa:* Es el dinero total que la empresa ha generado o va a recibir por esas 5 ventas confirmadas.
-   - *De dónde sale:* Es la suma del total de dinero de las Órdenes de Venta.
-4. **Orden promedio ($2.972):** 
-   - *Qué significa:* En promedio, cada vez que un cliente nos compra, gasta cerca de 3 mil dólares.
-   - *De dónde sale:* Se calcula dividiendo el "Ingreso" ($14.859) entre el número de ventas "Confirmadas" (5). Es un indicador clave para saber si estamos vendiendo tours caros o baratos.
+* **Tarjetas de Indicadores Principales (KPIs superiores):**
+  * **Cotizaciones:** Total de presupuestos generados y enviados a los clientes que aún no se han cerrado.
+  * **Confirmados:** Número total de ventas que ya han sido aceptadas y oficializadas.
+  * **Ingreso:** Monto total de dinero generado por las ventas confirmadas en el periodo seleccionado.
+  * **Orden promedio:** El valor monetario promedio de cada venta (Ingresos divididos entre las Órdenes confirmadas). Ayuda a entender el nivel de gasto habitual de los clientes.
 
-#### B. Gráfico Central: "Ventas mensuales"
-- *Qué muestra:* Es un gráfico de líneas (aunque en la imagen solo haya un punto azul por ahora). En el eje inferior (horizontal) vemos el mes **"Julio 2026"**, y en el eje lateral (vertical) vemos el **"Revenue"** (Ingresos) que va desde 0 hasta 16.000.
-- *De dónde sale:* Toma el total de ventas (Ingreso) y lo divide por meses. El punto azul está casi llegando a la línea de 15.000, lo que coincide exactamente con nuestro Ingreso total de $14.859. Con el paso de los meses, este punto formará una línea para ver si las ventas suben o bajan.
+* **Gráfico "Ventas mensuales" (Monthly Sales):**
+  * Muestra la evolución de los ingresos a lo largo del tiempo. Es fundamental para identificar patrones estacionales (meses de alta o baja demanda en turismo).
 
-#### C. Tablas Inferiores (Rankings)
-En la parte de abajo vemos dos listas detalladas que nos ayudan a entender exactamente quién está comprando y quién está vendiendo. Ambas tablas muestran el correo o nombre del Cliente, el Vendedor responsable y el Ingreso generado.
+### Tablas de Ranking y Desempeño:
+Estas secciones organizan la información de mayor a menor para identificar rápidamente las mejores oportunidades comerciales.
 
-1. **Mejores cotizaciones (Izquierda):**
-   - *Qué muestra:* Las 5 cotizaciones (presupuestos) con los montos de dinero más altos que están actualmente en proceso. Vemos correos como "waykitrek.transportes@gmail.com" con montos desde $289 hasta $3,582. 
-   - *De dónde sale:* El sistema revisa los documentos en estado "Presupuesto", los ordena del más caro al más barato y muestra el Top 5. El vendedor estrella aquí es "Amaru Cusi", quien está manejando todas estas grandes cotizaciones.
-2. **Órdenes de venta principales (Derecha):**
-   - *Qué muestra:* Las 5 ventas **ya cerradas** más grandes de la empresa. Aquí vemos una venta gigantesca de $11,360 al cliente "contactorogerls@gmail.com", liderada por el vendedor Amaru Cusi. También vemos ventas de "Carlos Fernandez" y "Américo Aguilar" manejadas por Leo Cusi.
-   - *De dónde sale:* El sistema revisa los documentos en estado "Orden de Venta", los ordena de mayor a menor y extrae a los mejores 5 clientes.
+* **Top Quotations (Mejores cotizaciones) y Top Sales Orders (Órdenes de venta principales):**
+  * Muestran las negociaciones de mayor valor económico. Detallan el Cliente, el Vendedor a cargo y el monto potencial o cerrado (Revenue). 
+  * *Fuente:* Cotizaciones pendientes y Órdenes de venta confirmadas, respectivamente.
+
+* **Top Products (Productos más vendidos) y Categorías:**
+  * Identifican qué tours específicos y qué familias de productos (ej. "Packages", "Inca Trail") están generando más ingresos y mayor volumen de pedidos.
+  * *Fuente:* Las líneas de detalle (los tours específicos agregados) dentro de cada Orden de Venta.
+
+* **Top Countries (Mejores países) y Top Customers (Mejores clientes):**
+  * Permiten visualizar geográficamente de dónde provienen los compradores y revelar quiénes son los clientes individuales que más invierten.
+  * *Fuente:* La información de perfil y dirección del contacto asociado a la Orden de Venta.
+
+* **Top Sales Teams (Equipos) y Top Salespeople (Vendedores):**
+  * Evalúa el rendimiento del personal interno, mostrando qué equipo y qué asesor de ventas está cerrando más tratos y atrayendo mayor cantidad de dinero.
+  * *Fuente:* El campo "Vendedor" y "Equipo de Ventas" asignado a cada venta.
+
+* **Top Sources (Orígenes) y Top Mediums (Medios de adquisición):**
+  * Analizan por qué canal publicitario o vía de contacto llegó la venta (ej. referidos, sitio web, redes sociales). Es vital para evaluar la efectividad del área de marketing.
+  * *Fuente:* Las etiquetas de rastreo (UTM) registradas en Odoo al momento en que el prospecto inició el contacto.
 
 ![Tablero de Ventas](./screenshots/tablero_5_sales.png)
 
