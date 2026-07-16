@@ -28,10 +28,12 @@ if modules and modules[0]['state'] == 'installed':
     python_code = """
 if record.model == 'crm.lead' and record.res_id and record.message_type == 'email':
     lead = env['crm.lead'].browse(record.res_id)
+    
+    sender = record.email_from or 'Cliente'
+    subject = record.subject or 'Sin asunto'
+    
+    # 1. Si el lead TIENE vendedor asignado
     if lead.user_id and lead.user_id.partner_id and record.author_id.id != lead.user_id.partner_id.id:
-        sender = record.email_from or 'Cliente'
-        subject = record.subject or 'Sin asunto'
-        # Un mensaje limpio y directo
         body = f"🔔 @{lead.user_id.name} | De: {sender} <br/> Asunto: {subject}"
         lead.message_post(
             body=body,
@@ -39,6 +41,25 @@ if record.model == 'crm.lead' and record.res_id and record.message_type == 'emai
             subtype_xmlid='mail.mt_note',
             partner_ids=[lead.user_id.partner_id.id]
         )
+    # 2. Si el lead NO TIENE vendedor asignado (es un correo nuevo 'de la nada')
+    elif not lead.user_id:
+        # Buscamos a Américo (sales@waykitrek.net) u otro fallback, o podemos notificar a todos en el equipo.
+        # Por ahora buscaremos al usuario que tenga el correo sales@waykitrek.net o que se llame Américo.
+        fallback_user = env['res.users'].search([('login', 'ilike', 'sales')], limit=1)
+        if not fallback_user:
+            fallback_user = env['res.users'].search([('name', 'ilike', 'Americo')], limit=1)
+            
+        if fallback_user and fallback_user.partner_id:
+            # Asignarle el lead automáticamente para que sea suyo y convertirlo a Oportunidad
+            lead.write({'user_id': fallback_user.id, 'type': 'opportunity'})
+            
+            body = f"🔔 (NUEVA OPORTUNIDAD) @{fallback_user.name} | De: {sender} <br/> Asunto: {subject}"
+            lead.message_post(
+                body=body,
+                message_type='comment',
+                subtype_xmlid='mail.mt_note',
+                partner_ids=[fallback_user.partner_id.id]
+            )
 """
     
     existing = models.execute_kw(DB, uid, PASS, 'base.automation', 'search', [[('name', '=', 'Notificar Vendedor Correo CRM')]])
