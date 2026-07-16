@@ -13,32 +13,18 @@ common = xmlrpc.client.ServerProxy(f'{URL}/xmlrpc/2/common')
 uid = common.authenticate(DB, USER, PASS, {})
 models = xmlrpc.client.ServerProxy(f'{URL}/xmlrpc/2/object')
 
-python_code = """
-servers = env['fetchmail.server'].search([('state', '=', 'done')])
-for server in servers:
-    try:
-        server.fetch_mail()
-    except Exception:
-        pass
-"""
+print("Revisando los parámetros del sistema (ir.config_parameter) para correos...")
+params = models.execute_kw(DB, uid, PASS, 'ir.config_parameter', 'search_read', 
+    [[('key', 'ilike', 'mail')]], 
+    {'fields': ['key', 'value']})
 
-action_id = models.execute_kw(DB, uid, PASS, 'ir.actions.server', 'create', [{
-    'name': 'Force Fetchmail',
-    'model_id': models.execute_kw(DB, uid, PASS, 'ir.model', 'search', [[('model', '=', 'fetchmail.server')]])[0],
-    'state': 'code',
-    'code': python_code,
-}])
-try:
-    models.execute_kw(DB, uid, PASS, 'ir.actions.server', 'run', [[action_id]])
-except:
-    pass
-models.execute_kw(DB, uid, PASS, 'ir.actions.server', 'unlink', [[action_id]])
+for p in params:
+    print(f"{p['key']} = {p['value']}")
 
-print("Buscando correos de contactorogeris@gmail.com...")
-recent_emails = models.execute_kw(DB, uid, PASS, 'mail.message', 'search_read', 
-    [[('email_from', 'ilike', 'contactorogeris')]], 
-    {'fields': ['id', 'subject', 'email_from', 'date', 'model', 'res_id', 'message_type'], 'limit': 5, 'order': 'id desc'})
-
-for email in recent_emails:
-    print(f"ID: {email['id']} | Fecha: {email['date']} | Asunto: {email['subject']} | Modelo: {email['model']} | ID Res: {email['res_id']} | Tipo: {email['message_type']}")
+print("\nRevisando el alias del equipo de ventas (crm.team)...")
+teams = models.execute_kw(DB, uid, PASS, 'crm.team', 'search_read',
+    [[]],
+    {'fields': ['name', 'alias_name', 'alias_domain']})
+for t in teams:
+    print(f"Equipo: {t['name']} | Alias: {t.get('alias_name', '')} @ {t.get('alias_domain', '')}")
 
