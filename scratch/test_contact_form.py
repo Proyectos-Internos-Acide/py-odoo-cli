@@ -14,10 +14,10 @@ def test_contact_form():
     
     data = {
         'contactID': '1',
-        'name': 'Test Formulario',
-        'lastname': 'Automatizado',
-        'email': 'test@test.net',
-        'phone': '+51999888777',
+        'name': 'TEST ROGER',
+        'lastname': 'INA SANCHEZ',
+        'email': 'contactorogeris@gmail.com',
+        'phone': '+51999888776',
         'blID': '1',
         'blPaquete': 'Inca Trail 4 Days - For Families',
         'registerCode': 'web',
