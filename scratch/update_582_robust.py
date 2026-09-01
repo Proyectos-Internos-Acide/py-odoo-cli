@@ -1,0 +1,66 @@
+from odoo_cli.client import OdooClient
+
+client = OdooClient()
+
+with open('scratch/action_582_backup.py', 'r') as f:
+    orig_code_582 = f.read()
+
+# Build robust replacement
+replacement_code = """try:
+    # --- AGREGADO ESPECIAL PARA EL FORMULARIO DE CONTACTO WEB ---
+    # Interceptamos si el PHP de WordPress mando el HTML directo en la descripcion
+    if record.description and 'DETALLES DEL TOUR (FORMULARIO CUSTOM)' in record.description:
+        html_desc = str(record.description or '')
+        record.write({'description': ''})
+
+        # Extraer nombre del lead
+        rec_name = str(record.name or '').strip()
+        client_name = rec_name
+        if client_name.lower().startswith('cliente:'):
+            client_name = client_name[8:].strip()
+        elif client_name.lower().startswith('cliente :'):
+            client_name = client_name[9:].strip()
+
+        # Inyectar Cliente, Email y Telefono justo despues del encabezado
+        header_phrase = 'DETALLES DEL TOUR (FORMULARIO CUSTOM)'
+        h_idx = html_desc.find(header_phrase)
+        if h_idx != -1:
+            end_tag = html_desc.find('>', h_idx + len(header_phrase))
+            if end_tag != -1:
+                before_part = html_desc[:end_tag+1]
+                after_part = html_desc[end_tag+1:]
+
+                extra_lines = []
+                if client_name:
+                    extra_lines.append('<strong>Cliente:</strong> ' + str(client_name))
+                if record.email_from:
+                    extra_lines.append('<strong>Email:</strong> ' + str(record.email_from))
+                if record.phone:
+                    extra_lines.append('<strong>Telefono:</strong> ' + str(record.phone))
+
+                if extra_lines:
+                    html_desc = before_part + '<br>' + '<br>'.join(extra_lines) + '<br>' + after_part
+
+        final_html_to_post = html_desc
+
+        def post_contact_msg(body_msg=final_html_to_post):
+            env['crm.lead'].browse(record.id).message_post(
+                body=body_msg, 
+                message_type='comment', 
+                subtype_xmlid='mail.mt_note'
+            )
+        env.cr.postcommit.add(post_contact_msg)
+        
+        payload_raw = ''
+    else:
+        # Leemos el payload del campo dedicado o de description
+        payload_raw = record.x_wayki_sync_payload"""
+
+idx_old_start = orig_code_582.find("try:")
+idx_old_else = orig_code_582.find("    else:\n        # Leemos el payload")
+
+final_code_582 = replacement_code + orig_code_582[idx_old_else + len("    else:\n        # Leemos el payload"):]
+compile(final_code_582, '<string>', 'exec')
+
+res_582 = client.write('ir.actions.server', [582], {'code': final_code_582})
+print("Action 582 write result:", res_582)
