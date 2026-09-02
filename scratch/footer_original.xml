@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<t t-name="web.external_layout_footer_content">
+        <div t-attf-class="o_footer_content {{footer_content_classes}}">
+            <table class="table-borderless w-100">
+                <t t-set="footer_additionnal_content">
+                    <strong t-if="not is_html_empty(company.report_header) and is_tagline_footer" t-field="company.report_header" class="o_company_tagline" t-attf-class="{{is_centered_footer and 'w-100' or 'text-nowrap'}}">
+                        Company tagline
+                    </strong>
+                    <div t-if="report_type == 'pdf' and display_name_in_footer" t-out="o.name">(document name)</div>
+                </t>
+                <t t-set="footer_pager">
+                    <div t-if="report_type == 'pdf'" class="o_footer_pager o_footer_pager_pdf text-nowrap text-muted">Page <span class="page"/> / <span class="topage"/></div>
+                    <div t-if="is_preview" class="o_footer_pager text-nowrap text-muted">Page 1 / 1</div>
+                </t>
+                <tr>
+                    <td class="o_footer_content_text align-top" t-att-rowspan="not is_centered_footer and 2">
+                        <div t-field="company.report_footer"/>
+                    </td>
+                    <td t-if="not is_centered_footer" class="align-top text-end ps-3">
+                        <t t-out="footer_additionnal_content"/>
+                    </td>
+                </tr>
+                <tr t-if="not is_centered_footer and (is_preview or report_type == 'pdf')">
+                    <td class="align-bottom text-end ps-3">
+                        <t t-out="footer_pager"/>
+                    </td>
+                </tr>
+                <tr t-elif="is_centered_footer">
+                    <td class="align-top text-center">
+                        <t t-out="footer_additionnal_content"/>
+                        <t t-out="footer_pager"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </t>
