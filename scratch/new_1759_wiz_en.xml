@@ -50,7 +50,7 @@
                         <thead>
                             <tr style="background:#20603D; color:#ffffff;">
                                 <th style="text-align:center; width:88px; padding:8px 6px; font-weight:bold;">Date</th>
-                                <th style="text-align:left; width:220px; padding:8px 6px; font-weight:bold;">Product</th>
+                                <th style="text-align:left; width:220px; padding:8px 6px; font-weight:bold;">Tours / Services</th>
                                 <th style="text-align:left; padding:8px 6px; font-weight:bold;">Included Services</th>
                             </tr>
                         </thead>
@@ -104,7 +104,7 @@
                     </div>
                     <t t-if="doc.x_not_included_services">
                         <div style="margin-top:20px; margin-bottom:12px; page-break-inside: avoid;">
-                            <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Services Not Included</span>
+                            <span style="display:inline-block; font-size:12px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:2px;">Observations</span>
                         </div>
                         <div style="font-size:10px; color:#4b5563; line-height:1.45; padding-left:8px; border-left:2px solid #E5B745; page-break-inside: avoid;">
                             <t t-out="doc.x_not_included_services"/>
