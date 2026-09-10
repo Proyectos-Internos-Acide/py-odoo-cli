@@ -99,7 +99,7 @@
                         <t t-set="_fp" t-value="doc.x_final_price or 0.0"/>
                         <t t-set="_rounded_fp" t-value="int(_fp) + (1 if ((_fp - int(_fp)) &gt; 0.0001) else 0)"/>
                         <span style="font-size:14px; font-weight:bold; color:#20603D; margin-left:10px;">
-                            <span t-out="wiz_cur.name if wiz_cur else 'USD'"/> <t t-out="'{:,.2f}'.format(_rounded_fp)"/>
+                            <span t-out="wiz_cur.name if wiz_cur else 'USD'"/> $<t t-out="'{:,.2f}'.format(_rounded_fp)"/>
                         </span>
                     </div>
                         <t t-if="doc.x_not_included_services">
