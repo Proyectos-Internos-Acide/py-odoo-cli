@@ -79,6 +79,14 @@
                                             <t t-else="">
                                                 <span style="color:#9ca3af; font-style:italic;">No included services</span>
                                             </t>
+                                            <t t-if="line.x_not_included_service_line_ids">
+                                                <div style="margin-top:6px; padding-top:4px; border-top:1px dashed #cbd5e1;">
+                                                    <span style="font-size:9px; font-weight:bold; color:#b91c1c;">Not included: </span>
+                                                    <t t-foreach="line.x_not_included_service_line_ids" t-as="n_svc">
+                                                        <div style="color:#6b7280; font-size:9px; margin-left:4px;">✗ <t t-out="n_svc.x_name"/></div>
+                                                    </t>
+                                                </div>
+                                            </t>
                                         </td>
                                     </tr>
                                 </t>
