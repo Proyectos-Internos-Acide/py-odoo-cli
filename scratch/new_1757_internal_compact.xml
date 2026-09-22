@@ -1,0 +1,205 @@
+<t t-name="wtk.report_custom_quote_document">
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-set="wiz_cur" t-value="doc.x_sale_order_id.currency_id if (doc.x_sale_order_id and doc.x_sale_order_id.currency_id) else env['res.currency'].search([('name','=','USD')], limit=1)"/>
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family: DejaVu Sans, Helvetica, Arial, sans-serif; color:#1a1a1a; font-size:11px; line-height:1.45;">
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+                        <tr>
+                            <td style="vertical-align:middle; padding:12px 14px; background:#20603D; color:#ffffff;">
+                                <div style="font-size:18px; font-weight:bold; letter-spacing:0.3px;">
+                                    <span t-if="doc.x_quote_name" t-field="doc.x_quote_name"/>
+                                    <span t-else="">Custom Quotation</span>
+                                </div>
+                                <div style="font-size:10px; opacity:0.92; margin-top:4px;">Wayki Trek · Reference Document</div>
+                            </td>
+                        </tr>
+                    </table>
+                    <table style="width:100%; border-collapse:collapse; margin-bottom:12px; border:none;">
+                        <tr>
+                            <td style="width:50%; padding:10px 12px; vertical-align:top; border-right:none; background:#fafafa;">
+                                <div style="font-size:9px; text-transform:uppercase; color:#6b7280; letter-spacing:0.5px;">Quotation</div>
+                                <div style="font-size:13px; font-weight:bold; color:#20603D;">
+                                    <span t-if="doc.x_sale_order_id" t-field="doc.x_sale_order_id.name"/>
+                                    <span t-else="">—</span>
+                                </div>
+                                <div t-if="doc.x_sale_order_id and doc.x_sale_order_id.partner_id" style="margin-top:8px; font-size:10px; color:#374151;">
+                                    <span t-field="doc.x_sale_order_id.partner_id.name"/>
+                                </div>
+                            </td>
+                            <td style="width:50%; padding:10px 12px; vertical-align:top; background:#fafafa;">
+                                <table style="width:100%; font-size:10px;">
+                                    <tr>
+                                        <td style="color:#6b7280; padding:2px 0;">Passengers (PAX)</td>
+                                        <td style="text-align:right; font-weight:bold;"><span t-field="doc.x_passenger_qty"/></td>
+                                    </tr>
+                                    
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                    <div style="margin-bottom:8px;">
+                        <span style="display:inline-block; font-size:12px; font-weight:bold; color:#20603D; border-bottom:2px solid #20603D; padding-bottom:2px;">Itinerary &amp; Cost Breakdown</span>
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; font-size:10px; border:1px solid #cbd5e1;">
+                        <thead>
+                            <tr style="background:#20603D; color:#ffffff;">
+                                <th style="text-align:center; width:75px; padding:8px 6px; font-weight:bold;">Date</th>
+                                <th style="text-align:left; width:140px; padding:8px 6px; font-weight:bold;">Tours / Services</th>
+                                <th style="text-align:left; width:130px; padding:8px 6px; font-weight:bold;">Services Not Included</th>
+                                <th style="text-align:left; padding:8px 6px; font-weight:bold;">Included Service</th>
+                                <th style="text-align:right; width:75px; padding:8px 6px; font-weight:bold;">Price USD</th>
+                                <th style="text-align:center; width:50px; padding:8px 6px; font-weight:bold;">Group</th>
+                                <th style="text-align:right; width:75px; padding:8px 6px; font-weight:bold;">PAX USD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-if="doc.x_line_ids">
+                                <t t-set="grand_total" t-value="0.0"/>
+                                <t t-foreach="doc.x_line_ids" t-as="line">
+                                    <t t-if="line.x_service_line_ids">
+                                        <t t-foreach="line.x_service_line_ids" t-as="svc">
+                                            <t t-set="svc_price" t-value="svc.x_price or 0.0"/>
+                                            <t t-set="svc_price_pax" t-value="svc.x_price_pax or svc_price"/>
+                                            <t t-set="grand_total" t-value="grand_total + svc_price"/>
+                                            <tr>
+                                                <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-if="svc_index == 0">
+                                                        <span t-field="line.x_service_date"/>
+                                                    </span>
+                                                </td>
+                                                <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-if="svc_index == 0">
+                                                        <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
+                                                        <span t-else="">—</span>
+                                                    </span>
+                                                </td>
+                                                <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-if="svc_index == 0">
+                                                        <t t-if="line.x_not_included_service_line_ids">
+                                                            <t t-foreach="line.x_not_included_service_line_ids" t-as="n_svc">
+                                                                <div t-out="n_svc.x_template_id.x_name if n_svc.x_template_id else n_svc.x_name"/>
+                                                            </t>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span style="color:#9ca3af; font-style:italic;">—</span>
+                                                        </t>
+                                                    </span>
+                                                </td>
+                                                <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <t t-if="svc.x_template_id and svc.x_template_id.x_raw_name">
+                                                        <span t-out="svc.x_template_id.x_raw_name"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span t-field="svc.x_name"/>
+                                                    </t>
+                                                </td>
+                                                <td style="text-align:right; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-out="svc_price" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                                                </td>
+                                                <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-if="svc.x_is_group">Yes</span>
+                                                    <span t-else="">No</span>
+                                                </td>
+                                                <td style="text-align:right; padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                    <span t-out="svc_price_pax" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr>
+                                            <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb;">
+                                                <span t-field="line.x_service_date"/>
+                                            </td>
+                                            <td style="padding:7px 6px; border:1px solid #e5e7eb;">
+                                                <span t-if="line.x_product_id" t-field="line.x_product_id.display_name"/>
+                                                <span t-else="">—</span>
+                                            </td>
+                                            <td style="padding:7px 6px; border:1px solid #e5e7eb; vertical-align:top;">
+                                                <t t-if="line.x_not_included_service_line_ids">
+                                                    <t t-foreach="line.x_not_included_service_line_ids" t-as="n_svc">
+                                                        <div t-out="n_svc.x_template_id.x_name if n_svc.x_template_id else n_svc.x_name"/>
+                                                    </t>
+                                                </t>
+                                                <t t-else="">
+                                                    <span style="color:#9ca3af; font-style:italic;">—</span>
+                                                </t>
+                                            </td>
+                                            <td style="padding:7px 6px; border:1px solid #e5e7eb; color:#9ca3af; font-style:italic;">
+                                                No included services
+                                            </td>
+                                            <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb;">—</td>
+                                            <td style="text-align:center; padding:7px 6px; border:1px solid #e5e7eb;">—</td>
+                                            <td style="text-align:right; padding:7px 6px; border:1px solid #e5e7eb;">—</td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </t>
+                            <t t-else="">
+                                <tr>
+                                    <td colspan="7" style="padding:14px; text-align:center; color:#6b7280; border:1px solid #e5e7eb;">
+                                        No products added to this custom quotation.
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                    <t t-if="doc.x_line_ids">
+                        <table style="width:100%; margin-top:10px; margin-bottom:12px;">
+                            <tr>
+                                <td style="text-align:right; padding:8px 0;">
+                                    <span style="font-size:11px; color:#374151;">Total Services (Price Sum):</span>
+                                    <span style="font-size:13px; font-weight:bold; color:#20603D; margin-left:10px;" t-out="grand_total" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </t>
+                    <div style="margin-top:6px; margin-bottom:8px;">
+                        <span style="display:inline-block; font-size:12px; font-weight:bold; color:#20603D; border-bottom:2px solid #20603D; padding-bottom:2px;">Financial Summary</span>
+                    </div>
+                    <table style="width:100%; max-width:100%; border-collapse:collapse; font-size:10px; border:1px solid #cbd5e1;">
+                        <tr style="background:#f3f4f6;">
+                            <td colspan="2" style="padding:5px 8px; font-weight:bold; color:#20603D;">Costs &amp; Margins</td>
+                        </tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Operating Cost per PAX (PAX Prices Sum)</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right; width:120px;"><span t-out="doc.x_operational_cost_pax" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Fixed Costs / Administrative</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><span t-out="doc.x_fixed_cost" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Variable Costs / Other</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><span t-out="doc.x_variable_cost" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr style="background:#ecfdf5;">
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb;"><strong>Total Costs</strong></td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><strong><span t-out="doc.x_total_cost" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></strong></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Estimated Profit</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><span t-out="doc.x_profit_amount" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;"><strong>Subtotal</strong></td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><strong><span t-out="doc.x_subtotal_amount" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></strong></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Tax (VAT or Income Tax)</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><span t-out="doc.x_tax_amount" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;"><strong>Cumulative Subtotal</strong></td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><strong><span t-out="doc.x_subtotal_after_tax" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></strong></td></tr>
+                        <tr><td style="padding:4px 8px; border:1px solid #e5e7eb;">Card Commission</td>
+                            <td style="padding:4px 8px; border:1px solid #e5e7eb; text-align:right;"><span t-out="doc.x_card_commission_amount" t-options="{'widget': 'monetary', 'display_currency': wiz_cur}"/></td></tr>
+                        <tr style="background:#20603D; color:#ffffff;">
+                            <td style="padding:6px 8px; border:none; font-size:11px;"><strong>FINAL PRICE</strong></td>
+                            <td style="padding:6px 8px; border:none; text-align:right; font-size:14px;"><strong><span t-out="wiz_cur.name if wiz_cur else 'USD'"/> $<t t-out="'{:,.2f}'.format(doc.x_final_price or 0.0)"/></strong></td></tr>
+                    </table>
+                    <t t-if="doc.x_not_included_services">
+                        <div style="margin-top:12px; margin-bottom:8px; page-break-inside: avoid;">
+                            <div style="margin-bottom:6px;">
+                                <span style="display:inline-block; font-size:11px; font-weight:bold; color:#E5B745; border-bottom:2px solid #E5B745; padding-bottom:1px;">Observations</span>
+                            </div>
+                            <div style="font-size:9.5px; color:#4b5563; line-height:1.4; padding-left:8px; border-left:2px solid #E5B745;">
+                                <t t-out="doc.x_not_included_services"/>
+                            </div>
+                        </div>
+                    </t>
+                    <p style="margin-top:12px; padding-top:12px; border-top:1px solid #e5e7eb; color:#6b7280; font-size:9px; text-align:center;">
+                        Informative document generated from Custom Quotation · Wayki Trek · Does not constitute a tax receipt.
+                    </p>
+                </div>
+            </t>
+        </t>
+    </t>
+</t>
