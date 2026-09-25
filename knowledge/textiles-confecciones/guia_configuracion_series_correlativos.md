@@ -4,6 +4,26 @@ Esta guía detalla cómo verificar, configurar y gestionar la serie **`F101`** (
 
 ---
 
+## ¿Se puede configurar desde los "Ajustes" de Odoo?
+
+**Sí, pero con una diferencia clave respecto a versiones antiguas de Odoo:**
+
+### A. El cambio en Odoo Moderno (Odoo 14 a 18 / SaaS)
+* En versiones viejas de Odoo (v11, v12, v13), las series se configuraban en una tabla técnica en *Ajustes > Técnico > Secuencias*.
+* En **Odoo Moderno**, las facturas **ya no usan esa tabla**. Odoo ahora usa el motor dinámico de comprobantes (`l10n_latam`). El sistema aprende y fija la serie **a partir del número que confirmas en la factura**.
+
+### B. El ajuste que SÍ existe en Ajustes: "Secuencia de documentos editable"
+Para poder ver y editar manualmente el correlativo siempre que lo necesites desde la interfaz:
+
+1. Ve a **Facturación** (o **Contabilidad**) > **Configuración** > **Ajustes**.
+2. Baja a la sección **Facturas de cliente** (*Customer Invoices*).
+3. Busca y activa la casilla:
+   * **`Secuencia de documentos editable`** (*Document's sequence editable*).
+4. Clic en **Guardar**.
+   > *Esto hace que el campo de la serie y correlativo sea visible y editable en cualquier comprobante borrador, permitiéndote forzar o saltar números si alguna vez lo necesitas.*
+
+---
+
 ## 1. Dónde verificar los Borradores ya configurados con F101-00000005 y B101-00000005
 
 Para comprobar los comprobantes de prueba ya creados en tu Odoo:
