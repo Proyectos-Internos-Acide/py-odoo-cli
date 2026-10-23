@@ -1,0 +1,433 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+
+\definecolor{rojo}{HTML}{C74221}
+\definecolor{verde}{HTML}{1B7A3D}
+\definecolor{gris}{HTML}{F2F2F2}
+\definecolor{atlasCoverBg}{HTML}{20242E}
+\definecolor{atlasMuted}{HTML}{9AA3B2}
+\definecolor{atlasMarino}{HTML}{010423}
+\definecolor{atlasDorado}{HTML}{F7C65F}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Manual POS --- Textiles y Confecciones Atlas}
+\fancyfoot[C]{\small P\'agina \thepage}
+\setlength{\headheight}{14pt}
+
+% Foto con recuadros numerados en coordenadas relativas (0..1).
+% Uso:
+% \foto{imagenes/02.png}{%
+%   \recuadro{0.42}{0.10}{0.60}{0.25}{1}%
+% }
+\newcommand{\recuadro}[5]{%
+  \draw[white,line width=3.5pt] (#1,#2) rectangle (#3,#4);%
+  \draw[rojo,ultra thick] (#1,#2) rectangle (#3,#4);%
+  \node[fill=rojo,text=white,font=\bfseries\small,inner sep=3pt,rounded corners=2pt] at (#3+0.030,#4-0.005) {#5};%
+}
+\newcommand{\foto}[2]{%
+  \begin{center}
+  \begin{tikzpicture}
+    \node[anchor=south west,inner sep=0] (img) at (0,0)
+      {\includegraphics[width=0.96\linewidth]{#1}};
+    \begin{scope}[x={(img.south east)},y={(img.north west)}]
+      #2
+    \end{scope}
+  \end{tikzpicture}
+  \end{center}
+}
+
+\newcommand{\paso}[1]{\par\medskip\noindent\textbf{Paso #1.} }
+\newcommand{\punto}[1]{\par\medskip\noindent\textbf{Punto #1.} }
+\newcommand{\aviso}[1]{%
+  \par\smallskip\noindent
+  \fcolorbox{rojo}{gris}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}}
+  \par\smallskip
+}
+\newcommand{\consejo}[1]{%
+  \par\smallskip\noindent
+  \fcolorbox{verde}{gris}{\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule}{#1}}
+  \par\smallskip
+}
+
+\begin{document}
+
+% ---------------- PORTADA ----------------
+\begin{titlepage}
+\thispagestyle{empty}
+
+% Banda superior azul marino
+\noindent\colorbox{atlasMarino}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
+  \color{white}\small\bfseries
+  MANUAL DE USUARIO%
+  \hfill TEXTILES Y CONFECCIONES ATLAS E.I.R.L.%
+}}
+\vspace{1.4cm}
+
+\begin{center}
+  \includegraphics[width=6.5cm]{imagenes/logo-atlas.png}
+\end{center}
+\vspace{0.7cm}
+
+\begin{center}
+  {\color{atlasMarino}\large\bfseries\textsc{Manual de usuario}}\\[4pt]
+  {\color{rojo}\rule{9cm}{2.2pt}}\\[2pt]
+  {\color{atlasDorado}\rule{9cm}{1pt}}\\[12pt]
+  {\color{atlasMarino}\LARGE\bfseries Punto de Venta (POS)}\\[6pt]
+  {\color{atlasMarino}\Large\bfseries Venta con boleta o factura electr\'onica}\\[10pt]
+  {\large\color{black!70} Gu\'ia operativa ilustrada para el personal de tienda}\\[4pt]
+  {\normalsize\color{black!70} Sistema Odoo \textperiodcentered\ Tienda de ropa}
+\end{center}
+\vspace{0.8cm}
+
+% Ficha del documento
+\noindent\fcolorbox{atlasMarino}{gris}{\parbox{\dimexpr\linewidth-2\fboxrule-2\fboxsep}{%
+  \vspace{2pt}
+  \begin{tabular}{@{\hspace{6pt}}l@{\hspace{12pt}}l@{}}
+    \color{atlasMarino}\textbf{Empresa:} &
+      Textiles y Confecciones Atlas E.I.R.L. \textperiodcentered\ RUC 20558074427 \\[4pt]
+    \color{atlasMarino}\textbf{Alcance:} &
+      Venta mostrador con boleta o factura electr\'onica (SUNAT) \\[4pt]
+    \color{atlasMarino}\textbf{Dirigido a:} &
+      Vendedoras y vendedores de tienda \\[4pt]
+    \color{atlasMarino}\textbf{Versi\'on:} &
+      1.0 \textperiodcentered\ Octubre 2026 \\
+  \end{tabular}%
+  \vspace{2pt}
+}}
+\vfill
+
+% Banda inferior azul marino
+\noindent\colorbox{atlasMarino}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
+  \centering\color{white}\small
+  Documento de uso interno \textperiodcentered\ Prohibida su reproducci\'on sin autorizaci\'on%
+}}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ---------------- CAP 1 ----------------
+\section{Antes de empezar: lo m\'inimo que debe saber}
+
+  \punto{1} Encienda la computadora, abra el navegador de internet (Chrome o Edge)
+  y entre a la p\'agina de Odoo de la empresa con su usuario y contrase\~na.
+  Si no tiene usuario, p\'idaselo a su encargado. No comparta su contrase\~na.
+
+  \punto{2} Este manual usa siempre las mismas palabras:
+  \begin{itemize}
+    \item \textbf{Hacer clic} = presionar una vez el bot\'on izquierdo del mouse
+    sobre lo que se indica.
+    \item \textbf{Pantalla} = lo que usted ve en el monitor.
+    \item \textbf{Bot\'on} = un recuadro con texto que se puede presionar.
+  \end{itemize}
+
+  \punto{3} \textbf{Idea m\'as importante del manual:}
+  en la pantalla de cobro hay un bot\'on que dice \textbf{Recibo/Factura}.
+  \begin{itemize}
+    \item Si ese bot\'on tiene el cuadrito \textbf{marcado con check},
+    la venta \textbf{S\'I se env\'ia a la SUNAT} (boleta o factura electr\'onica).
+    \item Si el cuadrito est\'a \textbf{vac\'io}, la venta \textbf{NO se env\'ia a la SUNAT}.
+  \end{itemize}
+  La mayor\'ia de las ventas de la tienda \textbf{s\'i} deben enviarse a la SUNAT.
+  No quite el check salvo que su encargado se lo pida.
+
+\aviso{\textbf{Boleta o factura, \'cu\'al sale?} Usted no elige a mano.
+El sistema decide solo seg\'un el cliente: si el cliente tiene \textbf{DNI},
+sale \textbf{boleta}; si tiene \textbf{RUC}, sale \textbf{factura}.
+Por eso es muy importante elegir bien al cliente (cap\'itulo 5).}
+
+% ---------------- CAP 2 ----------------
+\section{Entrar al Punto de venta}
+
+\paso{1} Despu\'es de ingresar a Odoo ver\'a el men\'u de aplicaciones
+(cuadritos con dibujos). Haga clic en el cuadrito
+\textbf{Punto de venta} (dibujo de una tiendita).
+
+\foto{imagenes/00-home-odoo.png}{%
+  \recuadro{0.2049}{0.7944}{0.3032}{0.9222}{1}%
+}
+
+\paso{2} Ver\'a la tarjeta de la tienda (\textbf{Tienda de ropa}).
+Haga clic en el bot\'on morado \textbf{Seguir vendiendo}.
+
+\foto{imagenes/01-pos-dashboard.png}{%
+  \recuadro{0.0229}{0.7642}{0.1196}{0.8009}{1}%
+}
+
+\consejo{Si en lugar de \textbf{Seguir vendiendo} ve un bot\'on que dice
+\textbf{Abrir caja} o \textbf{Nueva sesi\'on}, avise a su encargado:
+la caja del d\'ia todav\'ia no est\'a abierta y solo \'el debe abrirla.}
+
+% ---------------- CAP 3 ----------------
+\section{La pantalla de venta: qu\'e es cada cosa}
+
+Esta es la pantalla donde usted trabajar\'a todo el d\'ia.
+M\'irela con calma:
+
+\foto{imagenes/02-pos-pantalla-principal.png}{%
+  \recuadro{0.0056}{0.9361}{0.0730}{0.9906}{1}%
+  \recuadro{0.7174}{0.9476}{0.8300}{0.9790}{2}%
+  \recuadro{0.5908}{0.6080}{0.7217}{0.8189}{3}%
+  \recuadro{0.0056}{0.0178}{0.1192}{0.0722}{4}%
+}
+
+  Los n\'umeros rojos de la foto significan:
+
+  \textbf{1.} Pesta\~nas \textbf{Registrar} y \textbf{\'Ordenes}:
+  \textbf{Registrar} es la venta actual (la que est\'a atendiendo).
+  \textbf{\'Ordenes} es la lista de ventas ya terminadas. Trabaje siempre en
+  \textbf{Registrar}.
+
+  \textbf{2.} \textbf{Buscar productos:} aqu\'i escribe el nombre del producto
+  con el teclado (por ejemplo: \texttt{polo}) y el sistema lo filtra solo.
+
+  \textbf{3.} \textbf{Productos:} cada tarjeta con foto es un producto.
+  Para agregarlo a la venta, haga clic sobre su tarjeta (cap\'itulo 4).
+
+  \textbf{4.} \textbf{Consumidor Final:} es el cliente de la venta actual.
+  Al inicio siempre dice \textit{Consumidor Final}. Debe cambiarlo por
+  el cliente real (cap\'itulo 5). Abajo est\'a el bot\'on morado de
+  \textbf{Pago} para cobrar (cap\'itulo 7).
+
+% ---------------- CAP 4 ----------------
+\section{Agregar productos a la venta}
+
+\paso{1} Busque el producto (recuadro de b\'usqueda) o ub\'iquelo con la vista
+en sus tarjetas.
+
+\paso{2} Haga \textbf{un solo clic} sobre la tarjeta del producto.
+Cada clic agrega \textbf{una unidad}. Si el cliente lleva 3 polos iguales,
+haga clic 3 veces en el mismo polo.
+
+\paso{3} Revise el lado izquierdo de la pantalla: aparece la l\'inea del producto,
+la cantidad, los impuestos y el \textbf{Total} en soles. Ejemplo de la foto:
+\textit{1 Producto Prueba 01 --- S/ 1.00}.
+
+\foto{imagenes/03-producto-agregado.png}{%
+  \recuadro{0.0000}{0.8861}{0.3118}{0.9256}{1}%
+  \recuadro{0.5908}{0.6080}{0.7217}{0.8189}{2}%
+  \recuadro{0.0056}{0.4107}{0.3062}{0.4360}{3}%
+  \recuadro{0.0056}{0.0089}{0.3062}{0.0867}{4}%
+}
+
+  Los n\'umeros rojos de la foto significan:
+
+  \textbf{1.} La l\'inea de la venta: cantidad, nombre y precio.
+  Si se equivoc\'o de producto, haga clic sobre esa l\'inea y luego en el
+  bot\'on rojo con la X para borrarla.
+
+  \textbf{2.} El numerito negro sobre la tarjeta confirma cu\'antas unidades
+  lleva de ese producto.
+
+  \textbf{3.} El \textbf{Total}. Debe coincidir con lo que el cliente
+  va a pagar.
+
+  \textbf{4.} El bot\'on \textbf{Pago}. Cuando la lista de productos est\'e
+  completa, haga clic ah\'i para cobrar. Todav\'ia NO ha cobrado nada:
+  todo se puede corregir.
+
+\aviso{\textbf{No haga clic dos veces seguidas sin querer.}
+Si el mouse hace doble clic, se agregan 2 unidades. Mire siempre
+el numerito de la tarjeta y el Total antes de seguir.}
+
+% ---------------- CAP 5 ----------------
+\section{Elegir al cliente: el paso que decide boleta o factura}
+
+\paso{1} Debajo del Total, haga clic en el bot\'on que dice
+\textbf{Consumidor Final}.
+
+\paso{2} Se abre la ventana \textbf{Elige un cliente} con la lista de clientes.
+Tiene tres caminos:
+\begin{itemize}
+  \item \textbf{El cliente ya est\'a en la lista:} haga clic sobre su nombre.
+  \item \textbf{Es un cliente nuevo:} haga clic en el bot\'on morado
+  \textbf{Crear} y llene sus datos (ver recuadro de abajo).
+  \item \textbf{Es una venta r\'apida sin datos (monto peque\~no):}
+  puede dejar \textbf{Consumidor Final} y seguir. Saldr\'a una boleta simple.
+\end{itemize}
+
+\foto{imagenes/04-lista-clientes.png}{%
+  \recuadro{0.1715}{0.8956}{0.2191}{0.9500}{1}%
+  \recuadro{0.6384}{0.9071}{0.7932}{0.9385}{2}%
+  \recuadro{0.1608}{0.5883}{0.8392}{0.6950}{3}%
+}
+
+  Los n\'umeros rojos de la foto significan:
+
+  \textbf{1.} \textbf{Crear:} solo para clientes nuevos. No cree dos veces
+  al mismo cliente: primero b\'usquelo arriba con su nombre o documento.
+
+  \textbf{2.} \textbf{Buscar clientes:} escriba el nombre, DNI o RUC y presione
+  Enter.
+
+  \textbf{3.} \textbf{La fila del cliente:} haga clic sobre el nombre para elegirlo.
+  F\'ijese en el documento: los clientes con \textbf{RUC} (empresas) salen con
+  su direcci\'on completa; los de \textbf{DNI} (personas) salen m\'as simples.
+
+\subsection{Si el cliente es nuevo: c\'omo llenar la ficha}
+
+Al hacer clic en \textbf{Crear} se abre la ficha \textbf{Crear contacto}.
+Ll\'enela as\'i, de arriba hacia abajo:
+
+\foto{imagenes/08-crear-cliente.png}{%
+  \recuadro{0.2840}{0.7533}{0.8174}{0.8011}{1}%
+  \recuadro{0.1771}{0.4378}{0.4549}{0.4911}{2}%
+  \recuadro{0.1715}{0.1327}{0.2216}{0.1694}{3}%
+}
+
+  \paso{1} \textbf{Nombre:} escriba el nombre completo de la persona o empresa,
+  tal como figura en su DNI o RUC. Sin apodos.
+  \paso{2} \textbf{N\'umero de Identificaci\'on:} aqu\'i est\'a el secreto de
+  la boleta y la factura:
+  \begin{itemize}
+    \item Abra la lista y elija \textbf{DNI} si es una persona
+    (8 n\'umeros). La venta saldr\'a como \textbf{BOLETA}.
+    \item Elija \textbf{RUC} si es una empresa (11 n\'umeros).
+    La venta saldr\'a como \textbf{FACTURA}.
+  \end{itemize}
+  Escriba el n\'umero con cuidado, d\'igito por d\'igito. Un n\'umero mal
+  escrito hace que la SUNAT rechace el comprobante.
+  \paso{3} Revise todo y haga clic en \textbf{Guardar}.
+  Si se arrepiente, haga clic en \textbf{Descartar}: no se guarda nada.
+
+\aviso{\textbf{Regla de oro:} DNI = boleta, RUC = factura.
+Si el cliente pide factura pero solo le da su DNI, expl\'iquele con amabilidad
+que sin RUC el sistema solo puede emitir boleta.}
+
+\subsection{Cliente ya elegido}
+
+Al elegir al cliente, el bot\'on de abajo cambia y muestra su nombre.
+En la foto se eligi\'o a \textbf{COLEGIO M\'EDICO DEL PER\'U} (tiene RUC,
+entonces esta venta saldr\'a como \textbf{factura}).
+
+\foto{imagenes/05-cliente-seleccionado.png}{%
+  \recuadro{0.0056}{0.3374}{0.1793}{0.3918}{1}%
+  \recuadro{0.0056}{0.0089}{0.3062}{0.0867}{2}%
+}
+
+  \paso{1} Compruebe que el nombre del cliente es el correcto.
+  Si se equivoc\'o, haga clic otra vez sobre el nombre y elija otro.
+  \paso{2} Todo listo para cobrar: haga clic en \textbf{Pago}.
+
+% ---------------- CAP 6 ----------------
+\section{Cobrar: la pantalla de pago y el bot\'on Recibo/Factura}
+
+Al hacer clic en \textbf{Pago} aparece la pantalla de cobro.
+Tiene tres zonas:
+
+\foto{imagenes/06-pantalla-pago.png}{%
+  \recuadro{0.0056}{0.8456}{0.3069}{0.9167}{1}%
+  \recuadro{0.5549}{0.3578}{0.7576}{0.5667}{2}%
+  \recuadro{0.1590}{0.3363}{0.3069}{0.3907}{3}%
+}
+
+  \paso{1} \textbf{Medio de pago:} c\'omo paga el cliente
+  (Efectivo, Tarjeta, YAPE, PLIN o Cuenta de cliente).
+  Haga clic en el que corresponda. Este manual explica el cobro en
+  \textbf{Efectivo}, que es el m\'as com\'un.
+  \paso{2} \textbf{El monto grande:} es el total a cobrar (ejemplo: S/ 1.00).
+  Debe coincidir con lo que usted le dice al cliente.
+  \paso{3} \textbf{Recibo/Factura con check:} significa que al cobrar,
+  el sistema \textbf{crear\'a el comprobante y lo enviar\'a a la SUNAT}.
+  D\'ejelo marcado. Si est\'a vac\'io (foto siguiente), la venta
+  \textbf{NO} genera comprobante para la SUNAT.
+
+\subsection{Con check y sin check: la diferencia}
+
+Compare las dos fotos. En la primera el cuadrito tiene check:
+\textbf{esta venta S\'I va a la SUNAT}. En la segunda el cuadrito est\'a vac\'io:
+\textbf{esta venta NO va a la SUNAT} (solo queda registrada en la tienda).
+
+\foto{imagenes/07-tipo-comprobante.png}{%
+  \recuadro{0.1590}{0.3363}{0.3069}{0.3907}{1}%
+}
+
+\aviso{\textbf{Si toca el bot\'on Recibo/Factura, cambia de un estado al otro.}
+No lo toque por curiosidad en una venta real: si lo deja sin check,
+el cliente se ir\'a sin su boleta o factura electr\'onica y habr\'a que
+arreglarlo despu\'es con su encargado y el contador.}
+
+\consejo{Antes de seguir: mire las tres cosas en orden:
+1) medio de pago correcto, 2) monto correcto, 3) Recibo/Factura con check.
+Solo entonces contin\'ue.}
+
+% ---------------- CAP 7 ----------------
+\section{Cobrar en efectivo paso a paso}
+
+\paso{1} En la pantalla de pago, haga clic en \textbf{Efectivo}.
+
+\paso{2} El sistema muestra \textbf{Procesando\dots} con el monto grande.
+Espere sin tocar nada: est\'a guardando la venta y preparando el comprobante.
+
+\foto{imagenes/09-pago-efectivo.png}{%
+  \recuadro{0.2778}{0.6580}{0.7222}{0.7780}{1}%
+}
+
+\paso{3} Cuando termine (desaparece el recuadro 1 y aparecen los botones \textbf{Imprimir},
+\textbf{Enviar recibo} y \textbf{Continuar}:
+\begin{itemize}
+  \item \textbf{Imprimir:} imprime el ticket para entregar al cliente.
+  \item \textbf{Enviar recibo:} se lo env\'ia al correo del cliente (si tiene).
+  \item \textbf{Continuar:} vuelve a la pantalla de venta para atender
+  al siguiente cliente. La venta anterior ya qued\'o guardada.
+\end{itemize}
+
+\paso{4} Haga clic en \textbf{Continuar} y verifique que la pantalla qued\'o
+limpia (sin productos) antes de atender al siguiente cliente.
+
+\aviso{\textbf{Un clic, una sola vez.} Cuando est\'a en \textbf{Procesando\dots},
+NO haga clic de nuevo ni cierre la ventana: puede duplicar el cobro.
+Espere a que aparezcan los botones Imprimir y Continuar.}
+
+% ---------------- CAP 8 ----------------
+\section{Errores frecuentes y qu\'e hacer}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Agregu\'e un producto de m\'as (o el equivocado).} \\
+  Antes de cobrar: haga clic en la l\'inea del producto (lado izquierdo)
+  y b\'orrela con el bot\'on rojo X. Despu\'es de cobrar ya NO se puede
+  borrar: avise a su encargado (se corrige con nota de cr\'edito).
+
+  \item \textbf{Eleg\'i al cliente equivocado.} \\
+  Antes de cobrar: haga clic otra vez sobre el nombre del cliente y elija
+  el correcto. Despu\'es de cobrar ya NO se puede cambiar.
+
+  \item \textbf{Olvid\'e marcar Recibo/Factura y cobr\'e sin comprobante.} \\
+  Avise de inmediato a su encargado. Esa venta qued\'o sin enviar a la SUNAT
+  y debe regularizarse el mismo d\'ia.
+
+  \item \textbf{La pantalla se qued\'o en Procesando\dots mucho tiempo.} \\
+  Espere un minuto sin tocar nada. Si no avanza, avise a su encargado.
+  No intente cobrar la misma venta en otra computadora: podr\'ia duplicarse.
+
+  \item \textbf{El cliente dice que su boleta/factura ``no aparece''.} \\
+  Los comprobantes tienen plazos de la SUNAT: la boleta individual hasta
+  5 d\'ias y el resumen hasta 7 d\'ias; la factura hasta 7 d\'ias.
+  Si el env\'io se demor\'o, el sistema muestra un error y el comprobante
+  queda pendiente. Avise a su encargado para que lo regularice cuanto antes.
+\end{enumerate}
+
+\section*{Resumen de una venta normal (para pegar en caja)}
+
+\begin{enumerate}
+  \item Entrar a \textbf{Punto de venta} $\rightarrow$ \textbf{Seguir vendiendo}.
+  \item Clic en cada producto que lleva el cliente. Revisar el Total.
+  \item Clic en \textbf{Consumidor Final} $\rightarrow$ buscar o crear al cliente
+  (DNI = boleta, RUC = factura).
+  \item Clic en \textbf{Pago}. Revisar: medio de pago, monto y
+  \textbf{Recibo/Factura con check}.
+  \item Clic en el medio de pago (ej. \textbf{Efectivo}). Esperar sin tocar nada.
+  \item \textbf{Imprimir} el ticket, entregar al cliente y hacer clic en
+  \textbf{Continuar}.
+\end{enumerate}
+
+\end{document}
