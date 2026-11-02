@@ -17,6 +17,9 @@
 \definecolor{atlasMarino}{HTML}{010423}
 \definecolor{atlasDorado}{HTML}{F7C65F}
 
+\hypersetup{colorlinks=true,linkcolor=atlasMarino,urlcolor=atlasMarino,
+  pdftitle={Manual POS --- Textiles y Confecciones Atlas}}
+
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small Manual POS --- Textiles y Confecciones Atlas}
@@ -394,6 +397,205 @@ limpia (sin productos) antes de atender al siguiente cliente.
 \aviso{\textbf{Un clic, una sola vez.} Cuando est\'a en \textbf{Procesando\dots},
 NO haga clic de nuevo ni cierre la ventana: puede duplicar el cobro.
 Espere a que aparezcan los botones Imprimir y Continuar.}
+
+% ---------------- CAP 9 ----------------
+\clearpage
+\section{Anular una boleta o factura electr\'onica}
+
+Anular un comprobante electr\'onico es un acto con efecto ante la SUNAT:
+una vez anulado, el documento deja de tener validez fiscal. Por eso este
+cap\'itulo se hace con calma y en orden. Si en alg\'un paso el sistema muestra
+un error de plazo o fecha, det\'engase y avise a su encargado o al contador:
+un comprobante vencido ya no se puede anular por la v\'ia normal.
+
+\subsection{Regla de oro: \'cu\'al camino usar}
+
+Antes de tocar nada, responda una sola pregunta:
+\textbf{\'el comprobante se entreg\'o al cliente o la venta s\'i ocurri\'o?}
+
+\begin{itemize}
+  \item \textbf{S\'i (venta real, devoluci\'on o dato mal puesto en un
+  comprobante entregado):} use el \textbf{Camino A: nota de cr\'edito}.
+  Sirve para boletas y para facturas.
+  \item \textbf{No (fue un error y el comprobante NO se entreg\'o a nadie):}
+  use el \textbf{Camino B: solicitar cancelaci\'on}. Solo sirve para
+  \textbf{facturas}, dentro del plazo de ley (ver tabla de plazos abajo).
+\end{itemize}
+
+\aviso{\textbf{Las boletas siempre se anulan con nota de cr\'edito.}
+Si en una boleta presiona \textbf{Solicitar cancelaci\'on}, el propio sistema
+responde que ese tipo de documento solo se cancela con nota de cr\'edito
+(ver foto del mensaje m\'as abajo). No insista: cambie al Camino A.}
+
+\subsection{Encontrar el comprobante que se va a anular}
+
+\paso{1} Entre a \textbf{Contabilidad} (cuadrito del men\'u principal),
+luego arriba pulse \textbf{Clientes} y despu\'es \textbf{Facturas}.
+Aqu\'i est\'an juntas las boletas y las facturas.
+
+\paso{2} Ubique el comprobante por su n\'umero (por ejemplo
+\textit{B101-00000008}). F\'ijese en la columna \textbf{Estado}:
+solo se puede anular un comprobante en estado \textbf{Registrado}
+o \textbf{Pagado}. Haga clic sobre su n\'umero para abrirlo.
+
+\foto{imagenes/10-lista-facturas.png}{%
+  \recuadro{0.0279}{0.7064}{0.1498}{0.7509}{1}%
+}
+
+Los n\'umeros rojos de la foto significan:
+
+\textbf{1.} La fila del comprobante: n\'umero, cliente, fecha y total.
+Compruebe que es el documento correcto antes de abrirlo.
+
+\subsection{Camino A: nota de cr\'edito (boletas y facturas)}
+
+\paso{1} Con el comprobante abierto, en la barra superior haga clic en
+\textbf{Nota de cr\'edito} (recuadro 1 de la foto). El recuadro 2
+(\textbf{Solicitar cancelaci\'on}) corresponde al Camino B y solo
+aplica a facturas con error no entregadas.
+
+\foto{imagenes/11-form-factura-botones.png}{%
+  \recuadro{0.1894}{0.8380}{0.2767}{0.8747}{1}%
+  \recuadro{0.3669}{0.8380}{0.4764}{0.8747}{2}%
+}
+
+\paso{2} Se abre la ventana \textbf{Nota de cr\'edito}. Ll\'enela as\'i,
+de arriba hacia abajo:
+
+\foto{imagenes/13-wizard-nota-credito.png}{%
+  \recuadro{0.3610}{0.5720}{0.8125}{0.5890}{1}%
+  \recuadro{0.1700}{0.4890}{0.8125}{0.5220}{2}%
+  \recuadro{0.1715}{0.3111}{0.2236}{0.3478}{3}%
+  \recuadro{0.3563}{0.3111}{0.4167}{0.3478}{4}%
+}
+
+Los n\'umeros rojos de la foto significan:
+
+\textbf{1.} \textbf{Motivo} que aparece en la nota: escriba qu\'e pas\'o
+con palabras simples (por ejemplo: \textit{se anul\'o la venta, el cliente
+devolvi\'o el producto}).
+
+\textbf{2.} \textbf{Motivo del cr\'edito:} abra la lista y elija
+\textbf{01 Anulaci\'on de la operaci\'on} cuando la venta queda sin efecto.
+El \textbf{Diario} debe decir \textbf{Ventas} y el \textbf{Tipo de Documento}
+sale solo (07, nota de cr\'edito de boleta o de factura seg\'un el original).
+La \textbf{Fecha de reversi\'on} debe ser la de hoy.
+
+\textbf{3.} \textbf{Revertir:} crea la nota de cr\'edito. Use siempre este
+bot\'on. El bot\'on vecino (\textit{Revertir y crear factura}) solo se usa
+cuando de inmediato se va a emitir el comprobante corregido; si no est\'a
+seguro, no lo toque y avise a su encargado.
+
+\textbf{4.} \textbf{Descartar:} cierra la ventana sin crear nada.
+\'Uselo si abri\'o esta ventana por error o si todav\'ia no est\'a seguro.
+
+\paso{3} Despu\'es de hacer clic en \textbf{Revertir}, la nota de cr\'edito
+queda creada. Conf\'irmela y env\'iela a la SUNAT con el bot\'on
+\textbf{Enviar ahora}, igual que una factura normal. El flujo electr\'onico
+de la nota de cr\'edito funciona de la misma manera que el de las facturas.
+Cada env\'io consume 1 cr\'edito IAP.
+
+\paso{4} Verifique que la nota qued\'o en estado \textbf{Enviado} y que en
+su historial aparece el mensaje de validaci\'on de la SUNAT. Reci\'en entonces
+la anulaci\'on tiene efecto fiscal.
+
+\subsection{Camino B: solicitar cancelaci\'on (solo facturas con error
+no entregadas)}
+
+\paso{1} Encuentre y abra la factura como se explic\'o arriba
+(recuadro 2 de la foto de botones: \textbf{Solicitar cancelaci\'on}).
+
+\paso{2} Se abre la ventana \textbf{Cancelar Factura}. Escriba el
+\textbf{Motivo de cancelaci\'on} con palabras claras
+(por ejemplo: \textit{factura emitida por error, no representa ninguna venta}).
+
+\foto{imagenes/15-wizard-cancelacion-factura.png}{%
+  \recuadro{0.2868}{0.5037}{0.8285}{0.5304}{1}%
+  \recuadro{0.1712}{0.3931}{0.2626}{0.4298}{2}%
+  \recuadro{0.2681}{0.3931}{0.3286}{0.4298}{3}%
+}
+
+Los n\'umeros rojos de la foto significan:
+
+\textbf{1.} \textbf{Motivo de cancelaci\'on:} expl\'iquelo en una frase.
+Sin motivo escrito no se puede continuar.
+
+\textbf{2.} \textbf{Cancelar factura:} env\'ia la solicitud. El estado pasa
+a \textbf{Por cancelar} y luego, con \textbf{Enviar ahora} (o el proceso
+autom\'atico de cada hora), la SUNAT devuelve el ticket y el estado final
+\textbf{Cancelado} con su CDR en el historial.
+
+\textbf{3.} \textbf{Descartar:} cierra sin pedir nada. \'Uselo si abri\'o
+esta ventana por error.
+
+\paso{3} Este camino solo funciona dentro del plazo de ley:
+\textbf{7 d\'ias calendario contados desde el d\'ia siguiente de recibida
+la aceptaci\'on de la SUNAT (CDR)}, y \textbf{solo si el comprobante NO fue
+entregado al cliente}. Pasado ese plazo, o si el comprobante s\'i se entreg\'o,
+corresponde nota de cr\'edito (Camino A); ante la duda, avise al contador.
+
+\aviso{\textbf{Si presiona Solicitar cancelaci\'on en una boleta}, el sistema
+muestra un mensaje y no hace nada m\'as. Haga clic en \textbf{Cerrar}
+y siga el Camino A (nota de cr\'edito).}
+
+\foto{imagenes/12-wizard-cancelacion.png}{%
+  \recuadro{0.3403}{0.3711}{0.6597}{0.6289}{1}%
+  \recuadro{0.3576}{0.3977}{0.4020}{0.4344}{2}%
+}
+
+\textbf{1.} Mensaje: \textit{las facturas con este tipo de documento siempre
+deben cancelarse mediante una nota de cr\'edito}.
+
+\textbf{2.} Bot\'on \textbf{Cerrar}.
+
+\subsection{Plazos de la SUNAT para dar de baja (con fuentes)}
+
+{\small
+\begin{center}
+\begin{tabular}{|p{5.0cm}|p{5.0cm}|p{5.2cm}|}
+\hline
+\textbf{Caso} & \textbf{Plazo} & \textbf{Fuente} \\
+\hline
+Comunicaci\'on de baja / solicitud de
+cancelaci\'on de factura \textbf{no otorgada} &
+Hasta 7 d\'ias calendario desde el d\'ia
+siguiente de la CDR aceptada & [1] SUNAT \\
+\hline
+Boleta enviada por ejemplar &
+Hasta 5 d\'ias desde el d\'ia siguiente;
+luego solo resumen diario (hasta el 7.\textordmasculine\ d\'ia) &
+[2] R.S.\ 114-2019 \newline [3] SUNAT \\
+\hline
+Factura y nota vinculada (env\'io) &
+Hasta 7 d\'ias desde el d\'ia siguiente de emitida &
+[2] R.S.\ 114-2019 \\
+\hline
+Nota de cr\'edito &
+Se emite para anular, descontar o corregir,
+referenciando el documento original &
+[4] SUNAT \newline [5] gob.pe \\
+\hline
+\end{tabular}
+\end{center}
+}
+
+\textbf{Fuentes (pulse el enlace para abrir el documento oficial):}
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \href{https://orientacion.sunat.gob.pe/3529-operatividad}{SUNAT -- Operatividad: plazo para enviar la comunicaci\'on de baja}.
+  \item \href{https://www.sunat.gob.pe/legislacion/superin/2019/114-2019.pdf}{Resoluci\'on de Superintendencia N.\textordmasculine\ 114-2019 (PDF): plazos de env\'io de factura, boleta y notas}.
+  \item \href{https://orientacion.sunat.gob.pe/04-resumen-diario-boleta-de-venta-electronica}{SUNAT -- Resumen diario de boletas de venta electr\'onica}.
+  \item \href{https://cpe.sunat.gob.pe/tipos_de_comprobantes/nota_de_credito}{SUNAT -- Nota de cr\'edito electr\'onica: para qu\'e sirve}.
+  \item \href{https://www.gob.pe/17414-emitir-nota-de-credito-electronica}{gob.pe -- Tr\'amite: emitir nota de cr\'edito electr\'onica}.
+\end{enumerate}
+
+Flujo en Odoo documentado por el fabricante:
+\href{https://www.odoo.com/documentation/19.0/es/applications/finance/fiscal_localizations/peru.html}{Odoo 19 -- Localizaci\'on Per\'u (proceso de cancelaci\'on y notas de cr\'edito)}.
+
+\consejo{Regla pr\'actica para la tienda: las anulaciones se hacen
+\textbf{el mismo d\'ia} que se detecta el error. Si el sistema responde con
+un error de fecha o plazo vencido (por ejemplo, \textit{presentaci\'on fuera
+de fecha}), no reintente: anote el n\'umero del comprobante y el mensaje, y
+avise el mismo d\'ia a su encargado y al contador.}
 
 % ---------------- CAP 8 ----------------
 \clearpage
